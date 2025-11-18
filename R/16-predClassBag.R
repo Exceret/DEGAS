@@ -1,0 +1,74 @@
+#' @title Bagged Prediction for Classification Models
+#'
+#' @description
+#' Performs bagged (bootstrap aggregating) predictions using an ensemble of
+#' ccModel objects. This function averages predictions from multiple models
+#' to improve stability and accuracy.
+#'
+#' @param ccModel A list of `ccModel` objects representing the ensemble of
+#'               models to use for bagged prediction. Each model should be
+#'               a valid ccModel instance.
+#' @param Exp A matrix or data frame containing the expression data to be
+#'            classified.
+#' @param scORpat A character string specifying whether the data represents
+#'               single-cell ("sc") or phenotype ("pat") data. This parameter
+#'               is passed to the underlying prediction functions.
+#'
+#' @return A matrix of averaged predictions where each element represents the
+#'         aggregated probability or classification score across all models
+#'         in the ensemble. The output is computed as the mean of all individual
+#'         model predictions.
+#'
+#' @details
+#' This function implements model bagging by:
+#' \itemize{
+#'   \item Iterating over each model in the `ccModel` list using `purrr::map`
+#'   \item Selecting the appropriate prediction function based on the model's
+#'         architecture ("DenseNet" vs "Standard")
+#'   \item Averaging all predictions using `Reduce("+", out) / length(out)`
+#' }
+#'
+#' The function supports two architectures:
+#' \itemize{
+#'   \item **"DenseNet"**: Uses `predClass2` for prediction
+#'   \item **"Standard"**: Uses `predClass1` for prediction
+#' }
+#'
+#' If an unsupported architecture is encountered, the function will abort
+#' with an informative error message.
+#'
+#' @examples
+#' \dontrun{
+#' # Create an ensemble of models
+#' model_list <- list(model1, model2, model3)
+#'
+#' # Perform bagged prediction on expression data
+#' predictions <- predClassBag(
+#'   ccModel = model_list,
+#'   Exp = expression_matrix,
+#'   scORpat = "sc"
+#' )
+#'
+#' # Use the averaged predictions for downstream analysis
+#' class_assignments <- ifelse(predictions > 0.5, "Class1", "Class2")
+#' }
+#'
+#' @importFrom purrr map
+#' @export
+#' @family DEGAS
+#' @references Johnson TS, Yu CY, Huang Z, Xu S, Wang T, Dong C, et al. Diagnostic Evidence GAuge of Single cells (DEGAS): a flexible deep transfer learning framework for prioritizing cells in relation to disease. Genome Med. 2022 Feb 1;14(1):11.
+#'
+predClassBag.optimized <- function(ccModel, Exp, scORpat) {
+    out <- purrr::map(ccModel, function(ccmodel) {
+        switch(
+            ccmodel@Architecture,
+            "DenseNet" = predClass2(ccmodel, Exp, scORpat),
+            "Standard" = predClass1(ccmodel, Exp, scORpat),
+            cli::cli_abort(c(
+                "x" = "Incorrect architecture argument: ",
+                ">" = ccmodel@Architecture
+            ))
+        )
+    })
+    Reduce("+", out) / length(out)
+}

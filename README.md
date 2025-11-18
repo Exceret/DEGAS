@@ -1,6 +1,4 @@
 # Diagnostic Evidence GAuge of Single cells (DEGAS): A flexible deep transfer learning framework for prioritizing cells in relation to disease
-### https://doi.org/10.1186/s13073-022-01012-2
-### Package development by: <br>Zhi Huang (https://github.com/huangzhii)<br>Travis S. Johnson (https://github.com/tsteelejohnson91)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -76,14 +74,5 @@ install.packages("ggplot2")
 * AD example (https://github.com/tsteelejohnson91/DEGAS/blob/master/AD_example/AD_example.md)
 * MM example (https://github.com/tsteelejohnson91/DEGAS/blob/master/MM_example/MM_example.md)
 * BRCA spatial transcriptomics example (https://github.com/tsteelejohnson91/DEGAS/blob/master/BRCA_ST_example/BRCA_ST_example.md)
-
-## Coming Soon
-Diagnostic Evidence GAuge of Spatial transcriptomics (DEGAS)
-
-### Usage tracking
-Please click this link to help us track our usage.
-https://tsteelejohnson91.github.io/DEGAS/
-
-
 
 
