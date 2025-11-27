@@ -26,3 +26,5 @@ Imports:
     stats
 Suggests: 
     matrixStats
+Remotes:
+    WangLabCSU/SigBridgeRUtils

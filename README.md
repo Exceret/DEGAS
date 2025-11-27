@@ -1,5 +1,8 @@
 # Diagnostic Evidence GAuge of Single cells (DEGAS): A flexible deep transfer learning framework for prioritizing cells in relation to disease
 
+Please use [SigBridgeR](https://github.com/WangLabCSU/SigBridgeR) for the fork version of DEGAS. Bug reports and feature requests are welcomed at [SigBridgeR-issues](https://github.com/WangLabCSU/SigBridgeR/issues).
+
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ![DEGAS](figures/DEGAS.png "DEGAS")
