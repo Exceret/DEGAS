@@ -27,4 +27,4 @@ Imports:
 Suggests: 
     matrixStats
 Remotes:
-    WangLabCSU/SigBridgeRUtils
+    github::WangLabCSU/SigBridgeRUtils
