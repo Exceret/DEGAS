@@ -734,7 +734,7 @@ ListPyEnv.default <- function(
     env_type = c("all", "conda", "venv", "virtualenv"),
     timeout = 30000,
     venv_locations = c("~/.virtualenvs", "~/.venvs", "./venv", "./.venv"),
-    verbose = SigBridgeRUtils::getFuncOption("verbose"),
+    verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE,
     ...
 ) {
     env_type <- SigBridgeRUtils::MatchArg(
@@ -780,7 +780,7 @@ ListPyEnv.conda <- function(
     env_type = c("all", "conda", "venv", "virtualenv"),
     timeout = 30000,
     venv_locations = c("~/.virtualenvs", "~/.venvs", "./venv", "./.venv"),
-    verbose = SigBridgeRUtils::getFuncOption("verbose"),
+    verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE,
     ...
 ) {
     methods <- c(
@@ -933,7 +933,7 @@ ListPyEnv.venv <- function(
     env_type = c("all", "conda", "venv", "virtualenv"),
     timeout = 30000,
     venv_locations = c("~/.virtualenvs", "~/.venvs", "./venv", "./.venv"),
-    verbose = SigBridgeRUtils::getFuncOption("verbose"),
+    verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE,
     ...
 ) {
     venv_dirs <- c()

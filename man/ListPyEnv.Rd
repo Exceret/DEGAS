@@ -19,7 +19,7 @@ ListPyEnv(
   env_type = c("all", "conda", "venv", "virtualenv"),
   timeout = 30000,
   venv_locations = c("~/.virtualenvs", "~/.venvs", "./venv", "./.venv"),
-  verbose = SigBridgeRUtils::getFuncOption("verbose"),
+  verbose = SigBridgeRUtils::getFuncOption("verbose") \%||\% TRUE,
   ...
 )
 
@@ -27,7 +27,7 @@ ListPyEnv(
   env_type = c("all", "conda", "venv", "virtualenv"),
   timeout = 30000,
   venv_locations = c("~/.virtualenvs", "~/.venvs", "./venv", "./.venv"),
-  verbose = SigBridgeRUtils::getFuncOption("verbose"),
+  verbose = SigBridgeRUtils::getFuncOption("verbose") \%||\% TRUE,
   ...
 )
 
@@ -35,7 +35,7 @@ ListPyEnv(
   env_type = c("all", "conda", "venv", "virtualenv"),
   timeout = 30000,
   venv_locations = c("~/.virtualenvs", "~/.venvs", "./venv", "./.venv"),
-  verbose = SigBridgeRUtils::getFuncOption("verbose"),
+  verbose = SigBridgeRUtils::getFuncOption("verbose") \%||\% TRUE,
   ...
 )
 }

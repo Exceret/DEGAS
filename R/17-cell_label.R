@@ -94,7 +94,7 @@ LabelBinaryCells <- function(
     select_fraction,
     test_method,
     min_threshold = 0.7, # Added minimum threshold parameter
-    verbose = SigBridgeRUtils::getFuncOption("verbose")
+    verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE
 ) {
     chk::chk_length(pheno_colnames, 2)
     # Try to find the reference group in the column names
@@ -104,7 +104,7 @@ LabelBinaryCells <- function(
         pheno_colnames,
         value = TRUE
     )
-    if (nchar(ctrl_col) == 0) {
+    if (length(ctrl_col) == 0) {
         if (verbose) {
             cli::cli_alert_info(
                 "Using {.val {pheno_colnames[2]}} as reference group"
@@ -259,8 +259,8 @@ LabelBinaryCells <- function(
 #' # Create example prediction data with multiple phenotypes
 #' pred_data <- data.table(
 #'   cell_id = paste0("cell_", 1:1000),
-#'   phenotype_A = rnorm(1000),
-#'   phenotype_B = rexp(1000),
+#'   phenotype_A = runif(1000),
+#'   phenotype_B = runif(1000),
 #'   phenotype_C = runif(1000)
 #' )
 #'
@@ -283,11 +283,11 @@ LabelBinaryCells <- function(
 #'
 LabelContinuousCells <- function(
     pred_dt,
-    verbose = SigBridgeRUtils::getFuncOption("verbose")
+    verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE
 ) {
     if (verbose) {
         ts_cli$cli_alert_info(
-            "Searching for various phenotype-associated cells..."
+            "Searching for various phenotype-associated cells "
         )
     }
 
@@ -408,10 +408,10 @@ LabelSurvivalCells <- function(
     select_fraction,
     test_method,
     min_threshold = 0.7, # Added minimum threshold parameter
-    verbose = SigBridgeRUtils::getFuncOption("verbose")
+    verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE
 ) {
     if (verbose) {
-        ts_cli$cli_alert_info("Searching for survival-associated cells...")
+        ts_cli$cli_alert_info("Searching for survival-associated cells ")
     }
 
     pred_vec <- pred_dt[["Hazard"]]

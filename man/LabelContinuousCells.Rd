@@ -6,7 +6,7 @@
 \usage{
 LabelContinuousCells(
   pred_dt,
-  verbose = SigBridgeRUtils::getFuncOption("verbose")
+  verbose = SigBridgeRUtils::getFuncOption("verbose") \%||\% TRUE
 )
 }
 \arguments{
@@ -37,8 +37,8 @@ warnings for edge cases like empty results.
 # Create example prediction data with multiple phenotypes
 pred_data <- data.table(
   cell_id = paste0("cell_", 1:1000),
-  phenotype_A = rnorm(1000),
-  phenotype_B = rexp(1000),
+  phenotype_A = runif(1000),
+  phenotype_B = runif(1000),
   phenotype_C = runif(1000)
 )
 

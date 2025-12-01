@@ -15,7 +15,7 @@ runCCMTL.optimized(
   FFdepth,
   DEGAS.seed,
   force_rewrite = FALSE,
-  verbose = SigBridgeRUtils::getFuncOption("verbose")
+  verbose = SigBridgeRUtils::getFuncOption("verbose") \%||\% TRUE
 )
 }
 \arguments{
