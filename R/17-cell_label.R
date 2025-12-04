@@ -188,8 +188,8 @@ LabelBinaryCells <- function(
                 labels
             } else {
                 # Use normal distribution-based selection
-                mean_val <- colMeans(as.matrix(diff))
-                sd_val <- SigBridgeRUtils::colSds(as.matrix(diff))
+                mean_val <- SigBridgeRUtils::colMeans3(as.matrix(diff))
+                sd_val <- SigBridgeRUtils::colSds3(as.matrix(diff))
                 quantile_val <- stats::qnorm(
                     select_fraction,
                     mean = mean_val,
@@ -475,7 +475,7 @@ LabelSurvivalCells <- function(
             } else {
                 # Use normal distribution-based selection
                 mean_val <- colMeans(`Hazard`)
-                sd_val <- SigBridgeRUtils::colSds(`Hazard`)
+                sd_val <- SigBridgeRUtils::colSds3(`Hazard`)
                 quantile_val <- stats::qnorm(
                     select_fraction,
                     mean = mean_val,
