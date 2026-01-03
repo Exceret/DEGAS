@@ -19,7 +19,7 @@ NULL
 #'
 #' @export
 checkOS <- function() {
-    return(Sys.info()['sysname'])
+  return(Sys.info()['sysname'])
 }
 
 #' @rdname system-checks
@@ -38,7 +38,7 @@ checkOS <- function() {
 #'
 #' @export
 checkForPy <- function() {
-    return(system(paste0(DEGAS.pyloc, " -V")))
+  return(system(paste0(DEGAS.pyloc, " -V")))
 }
 
 #' @rdname system-checks
@@ -57,5 +57,5 @@ checkForPy <- function() {
 #'
 #' @export
 checkForTF <- function() {
-    return(system(paste0(DEGAS.pyloc, " -c 'import tensorflow'")))
+  return(system(paste0(DEGAS.pyloc, " -c 'import tensorflow'")))
 }

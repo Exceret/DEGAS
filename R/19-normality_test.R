@@ -78,70 +78,70 @@
 #' @family normality_test
 #' @export
 jb.test.modified <- function(x, mean = NA, sd = NA) {
-    if ((NCOL(x) > 1) || is.data.frame(x)) {
-        cli::cli_abort(c("x" = "x is not a vector or univariate time series"))
-    }
-    if (anyNA(x)) {
-        cli::cli_abort(c("x" = "x contains {.val NA}"))
-    }
-    DNAME <- deparse(substitute(x))
-    n <- length(x)
+  if ((NCOL(x) > 1) || is.data.frame(x)) {
+    cli::cli_abort(c("x" = "x is not a vector or univariate time series"))
+  }
+  if (anyNA(x)) {
+    cli::cli_abort(c("x" = "x contains {.val NA}"))
+  }
+  DNAME <- deparse(substitute(x))
+  n <- length(x)
 
-    if (is.na(mean) & is.na(sd)) {
-        m1 <- sum(x) / n
-        m2 <- sum((x - m1)^2) / n
-        m3 <- sum((x - m1)^3) / n
-        m4 <- sum((x - m1)^4) / n
-        b1 <- (m3 / m2^(3 / 2))^2
-        b2 <- (m4 / m2^2)
-        STATISTIC <- n * (b1 / 6 + (b2 - 3)^2 / 24)
-    }
+  if (is.na(mean) & is.na(sd)) {
+    m1 <- sum(x) / n
+    m2 <- sum((x - m1)^2) / n
+    m3 <- sum((x - m1)^3) / n
+    m4 <- sum((x - m1)^4) / n
+    b1 <- (m3 / m2^(3 / 2))^2
+    b2 <- (m4 / m2^2)
+    STATISTIC <- n * (b1 / 6 + (b2 - 3)^2 / 24)
+  }
 
-    if (!is.na(mean) & is.na(sd)) {
-        m1 <- mean
-        m2 <- sum((x - m1)^2) / n
-        m3 <- sum((x - m1)^3) / n
-        m4 <- sum((x - m1)^4) / n
-        b1 <- (m3 / m2^(3 / 2))^2
-        b2 <- (m4 / m2^2)
-        STATISTIC <- n * (b1 / 15 + (b2 - 3)^2 / 24)
-    }
+  if (!is.na(mean) & is.na(sd)) {
+    m1 <- mean
+    m2 <- sum((x - m1)^2) / n
+    m3 <- sum((x - m1)^3) / n
+    m4 <- sum((x - m1)^4) / n
+    b1 <- (m3 / m2^(3 / 2))^2
+    b2 <- (m4 / m2^2)
+    STATISTIC <- n * (b1 / 15 + (b2 - 3)^2 / 24)
+  }
 
-    if (is.na(mean) & !is.na(sd)) {
-        m1 <- mean(x)
-        m2 <- sd^2
-        m3 <- sum((x - m1)^3) / n
-        m4 <- sum((x - m1)^4) / n
-        b1 <- (m3 / m2^(3 / 2))^2
-        b2 <- (m4 / m2^2)
-        STATISTIC <- n * (b1 / 6 + (b2 - 3)^2 / 96)
-    }
+  if (is.na(mean) & !is.na(sd)) {
+    m1 <- mean(x)
+    m2 <- sd^2
+    m3 <- sum((x - m1)^3) / n
+    m4 <- sum((x - m1)^4) / n
+    b1 <- (m3 / m2^(3 / 2))^2
+    b2 <- (m4 / m2^2)
+    STATISTIC <- n * (b1 / 6 + (b2 - 3)^2 / 96)
+  }
 
-    if (!is.na(mean) & !is.na(sd)) {
-        m1 <- mean
-        m2 <- sd^2
-        m3 <- sum((x - m1)^3) / n
-        m4 <- sum((x - m1)^4) / n
-        b1 <- (m3 / m2^(3 / 2))^2
-        b2 <- (m4 / m2^2)
-        STATISTIC <- n * (b1 / 15 + (b2 - 3)^2 / 96)
-    }
+  if (!is.na(mean) & !is.na(sd)) {
+    m1 <- mean
+    m2 <- sd^2
+    m3 <- sum((x - m1)^3) / n
+    m4 <- sum((x - m1)^4) / n
+    b1 <- (m3 / m2^(3 / 2))^2
+    b2 <- (m4 / m2^2)
+    STATISTIC <- n * (b1 / 15 + (b2 - 3)^2 / 96)
+  }
 
-    PVAL <- 1 - stats::pchisq(STATISTIC, df = 2)
-    PARAMETER <- 2
-    METHOD <- "Modified Jarque Bera Test"
-    names(STATISTIC) <- "X-squared"
-    names(PARAMETER) <- "df"
-    structure(
-        list(
-            statistic = STATISTIC,
-            parameter = PARAMETER,
-            p.value = PVAL,
-            method = METHOD,
-            data.name = DNAME
-        ),
-        class = "htest"
-    )
+  PVAL <- 1 - stats::pchisq(STATISTIC, df = 2)
+  PARAMETER <- 2
+  METHOD <- "Modified Jarque Bera Test"
+  names(STATISTIC) <- "X-squared"
+  names(PARAMETER) <- "df"
+  structure(
+    list(
+      statistic = STATISTIC,
+      parameter = PARAMETER,
+      p.value = PVAL,
+      method = METHOD,
+      data.name = DNAME
+    ),
+    class = "htest"
+  )
 }
 
 #' @title D'Agostino Test of Normality
@@ -219,138 +219,138 @@ jb.test.modified <- function(x, mean = NA, sd = NA) {
 #' @export
 #'
 dagostino.test <- function(x) {
-    if (!is.numeric(x)) {
-        stop("'x' must be a numeric vector")
-    }
-    if (length(x) < 8) {
-        stop("'x' must have at least 8 elements")
-    }
+  if (!is.numeric(x)) {
+    stop("'x' must be a numeric vector")
+  }
+  if (length(x) < 8) {
+    stop("'x' must have at least 8 elements")
+  }
 
-    x <- x[!is.na(x)]
-    n <- as.double(length(x))
+  x <- x[!is.na(x)]
+  n <- as.double(length(x))
 
-    x_mean <- mean(x)
-    x_centered <- x - x_mean
-    m2 <- sum(x_centered^2) / n
-    m3 <- sum(x_centered^3) / n
-    m4 <- sum(x_centered^4) / n
+  x_mean <- mean(x)
+  x_centered <- x - x_mean
+  m2 <- sum(x_centered^2) / n
+  m3 <- sum(x_centered^3) / n
+  m4 <- sum(x_centered^4) / n
 
-    g1 <- m3 / (m2^(3 / 2))
+  g1 <- m3 / (m2^(3 / 2))
 
-    n_dbl <- as.double(n)
-    n2 <- n_dbl * n_dbl
-    n3 <- n2 * n_dbl
+  n_dbl <- as.double(n)
+  n2 <- n_dbl * n_dbl
+  n3 <- n2 * n_dbl
 
-    Y <- g1 * sqrt((n_dbl + 1) * (n_dbl + 3) / (6 * (n_dbl - 2)))
-    beta2 <- 3 *
-        (n2 + 27 * n_dbl - 70) *
-        (n_dbl + 1) *
-        (n_dbl + 3) /
-        ((n_dbl - 2) * (n_dbl + 5) * (n_dbl + 7) * (n_dbl + 9))
+  Y <- g1 * sqrt((n_dbl + 1) * (n_dbl + 3) / (6 * (n_dbl - 2)))
+  beta2 <- 3 *
+    (n2 + 27 * n_dbl - 70) *
+    (n_dbl + 1) *
+    (n_dbl + 3) /
+    ((n_dbl - 2) * (n_dbl + 5) * (n_dbl + 7) * (n_dbl + 9))
 
-    if (beta2 <= 1) {
-        W_sq <- 1.0
+  if (beta2 <= 1) {
+    W_sq <- 1.0
+  } else {
+    W_sq <- sqrt(2 * beta2 - 2)
+  }
+
+  if (W_sq <= 1) {
+    Z_g1 <- 0
+  } else {
+    delta <- 1 / sqrt(log(W_sq))
+    alpha <- sqrt(2 / (W_sq - 1))
+
+    ratio <- Y / alpha
+    Z_g1 <- delta * log(ratio + sqrt(ratio^2 + 1))
+  }
+
+  g2 <- m4 / (m2^2) - 3
+
+  E_g2 <- -6 / (n_dbl + 1)
+  Var_g2 <- 24 *
+    n_dbl *
+    (n_dbl - 2) *
+    (n_dbl - 3) /
+    ((n_dbl + 1)^2 * (n_dbl + 3) * (n_dbl + 5))
+
+  if (Var_g2 <= 0) {
+    standardized_g2 <- 0
+  } else {
+    standardized_g2 <- (g2 - E_g2) / sqrt(Var_g2)
+  }
+
+  if (n_dbl <= 3) {
+    beta2_kurt <- 1.0
+  } else {
+    beta2_kurt <- 6 *
+      (n2 - 5 * n_dbl + 2) /
+      ((n_dbl + 7) * (n_dbl + 9)) *
+      sqrt(
+        6 *
+          (n_dbl + 3) *
+          (n_dbl + 5) /
+          (n_dbl * (n_dbl - 2) * (n_dbl - 3))
+      )
+  }
+
+  if (beta2_kurt <= 0 || is.infinite(beta2_kurt)) {
+    Z_g2 <- 0
+  } else {
+    A <- 6 +
+      (8 / beta2_kurt) * (2 / beta2_kurt + sqrt(1 + 4 / (beta2_kurt^2)))
+
+    if (A <= 4) {
+      Z_g2 <- 0
     } else {
-        W_sq <- sqrt(2 * beta2 - 2)
-    }
-
-    if (W_sq <= 1) {
-        Z_g1 <- 0
-    } else {
-        delta <- 1 / sqrt(log(W_sq))
-        alpha <- sqrt(2 / (W_sq - 1))
-
-        ratio <- Y / alpha
-        Z_g1 <- delta * log(ratio + sqrt(ratio^2 + 1))
-    }
-
-    g2 <- m4 / (m2^2) - 3
-
-    E_g2 <- -6 / (n_dbl + 1)
-    Var_g2 <- 24 *
-        n_dbl *
-        (n_dbl - 2) *
-        (n_dbl - 3) /
-        ((n_dbl + 1)^2 * (n_dbl + 3) * (n_dbl + 5))
-
-    if (Var_g2 <= 0) {
-        standardized_g2 <- 0
-    } else {
-        standardized_g2 <- (g2 - E_g2) / sqrt(Var_g2)
-    }
-
-    if (n_dbl <= 3) {
-        beta2_kurt <- 1.0
-    } else {
-        beta2_kurt <- 6 *
-            (n2 - 5 * n_dbl + 2) /
-            ((n_dbl + 7) * (n_dbl + 9)) *
-            sqrt(
-                6 *
-                    (n_dbl + 3) *
-                    (n_dbl + 5) /
-                    (n_dbl * (n_dbl - 2) * (n_dbl - 3))
-            )
-    }
-
-    if (beta2_kurt <= 0 || is.infinite(beta2_kurt)) {
+      term1 <- 1 - 2 / (9 * A)
+      term2 <- (1 - 2 / A) / (1 + standardized_g2 * sqrt(2 / (A - 4)))
+      if (term2 <= 0) {
         Z_g2 <- 0
-    } else {
-        A <- 6 +
-            (8 / beta2_kurt) * (2 / beta2_kurt + sqrt(1 + 4 / (beta2_kurt^2)))
-
-        if (A <= 4) {
-            Z_g2 <- 0
-        } else {
-            term1 <- 1 - 2 / (9 * A)
-            term2 <- (1 - 2 / A) / (1 + standardized_g2 * sqrt(2 / (A - 4)))
-            if (term2 <= 0) {
-                Z_g2 <- 0
-            } else {
-                Z_g2 <- (term1 - term2^(1 / 3)) / sqrt(2 / (9 * A))
-            }
-        }
+      } else {
+        Z_g2 <- (term1 - term2^(1 / 3)) / sqrt(2 / (9 * A))
+      }
     }
+  }
 
-    K_sq <- Z_g1^2 + Z_g2^2
+  K_sq <- Z_g1^2 + Z_g2^2
 
-    p_value_skew <- 2 * stats::pnorm(-abs(Z_g1))
-    p_value_kurt <- 2 * stats::pnorm(-abs(Z_g2))
-    p_value_combined <- stats::pchisq(K_sq, df = 2, lower.tail = FALSE)
+  p_value_skew <- 2 * stats::pnorm(-abs(Z_g1))
+  p_value_kurt <- 2 * stats::pnorm(-abs(Z_g2))
+  p_value_combined <- stats::pchisq(K_sq, df = 2, lower.tail = FALSE)
 
-    p_value_skew <- max(0, min(1, p_value_skew))
-    p_value_kurt <- max(0, min(1, p_value_kurt))
-    p_value_combined <- max(0, min(1, p_value_combined))
+  p_value_skew <- max(0, min(1, p_value_skew))
+  p_value_kurt <- max(0, min(1, p_value_kurt))
+  p_value_combined <- max(0, min(1, p_value_combined))
 
-    DNAME <- deparse(substitute(x))
-    METHOD <- "D'Agostino Normality Test"
+  DNAME <- deparse(substitute(x))
+  METHOD <- "D'Agostino Normality Test"
 
-    structure(
-        list(
-            statistic = c(
-                Skewness = Z_g1,
-                Kurtosis = Z_g2,
-                Omnibus = K_sq
-            ),
-            parameter = c(df = 2),
-            p.value = c(
-                Skewness = p_value_skew,
-                Kurtosis = p_value_kurt,
-                Omnibus = p_value_combined
-            ),
-            method = METHOD,
-            data.name = DNAME,
-            alternative = "data are not normally distributed",
-            estimates = c(
-                n = n,
-                Skewness = g1,
-                Kurtosis = g2,
-                Mean = x_mean,
-                SD = sqrt(m2 * n / (n - 1))
-            )
-        ),
-        class = "htest"
-    )
+  structure(
+    list(
+      statistic = c(
+        Skewness = Z_g1,
+        Kurtosis = Z_g2,
+        Omnibus = K_sq
+      ),
+      parameter = c(df = 2),
+      p.value = c(
+        Skewness = p_value_skew,
+        Kurtosis = p_value_kurt,
+        Omnibus = p_value_combined
+      ),
+      method = METHOD,
+      data.name = DNAME,
+      alternative = "data are not normally distributed",
+      estimates = c(
+        n = n,
+        Skewness = g1,
+        Kurtosis = g2,
+        Mean = x_mean,
+        SD = sqrt(m2 * n / (n - 1))
+      )
+    ),
+    class = "htest"
+  )
 }
 
 #' @title Anderson-Darling Normality Test
@@ -433,37 +433,37 @@ dagostino.test <- function(x) {
 #' @family normality_test
 #' @export
 ad.test <- function(x) {
-    DNAME <- deparse(substitute(x))
-    x <- sort(x[stats::complete.cases(x)])
-    n <- length(x)
-    if (n < 8) {
-        stop("sample size must be greater than 7")
-    }
-    logp1 <- stats::pnorm((x - mean(x)) / stats::sd(x), log.p = TRUE)
-    logp2 <- stats::pnorm(-(x - mean(x)) / stats::sd(x), log.p = TRUE)
-    h <- (2 * seq_len(n) - 1) * (logp1 + rev(logp2))
-    A <- -n - mean(h)
-    AA <- (1 + 0.75 / n + 2.25 / n^2) * A
-    if (AA < 0.2) {
-        pval <- 1 - exp(-13.436 + 101.14 * AA - 223.73 * AA^2)
-    } else if (AA < 0.34) {
-        pval <- 1 - exp(-8.318 + 42.796 * AA - 59.938 * AA^2)
-    } else if (AA < 0.6) {
-        pval <- exp(0.9177 - 4.279 * AA - 1.38 * AA^2)
-    } else if (AA < 10) {
-        pval <- exp(1.2937 - 5.709 * AA + 0.0186 * AA^2)
-    } else {
-        pval <- 3.7e-24
-    }
-    structure(
-        list(
-            statistic = c(A = A),
-            p.value = pval,
-            method = "Anderson-Darling normality test",
-            data.name = DNAME
-        ),
-        class = "htest"
-    )
+  DNAME <- deparse(substitute(x))
+  x <- sort(x[stats::complete.cases(x)])
+  n <- length(x)
+  if (n < 8) {
+    stop("sample size must be greater than 7")
+  }
+  logp1 <- stats::pnorm((x - mean(x)) / stats::sd(x), log.p = TRUE)
+  logp2 <- stats::pnorm(-(x - mean(x)) / stats::sd(x), log.p = TRUE)
+  h <- (2 * seq_len(n) - 1) * (logp1 + rev(logp2))
+  A <- -n - mean(h)
+  AA <- (1 + 0.75 / n + 2.25 / n^2) * A
+  if (AA < 0.2) {
+    pval <- 1 - exp(-13.436 + 101.14 * AA - 223.73 * AA^2)
+  } else if (AA < 0.34) {
+    pval <- 1 - exp(-8.318 + 42.796 * AA - 59.938 * AA^2)
+  } else if (AA < 0.6) {
+    pval <- exp(0.9177 - 4.279 * AA - 1.38 * AA^2)
+  } else if (AA < 10) {
+    pval <- exp(1.2937 - 5.709 * AA + 0.0186 * AA^2)
+  } else {
+    pval <- 3.7e-24
+  }
+  structure(
+    list(
+      statistic = c(A = A),
+      p.value = pval,
+      method = "Anderson-Darling normality test",
+      data.name = DNAME
+    ),
+    class = "htest"
+  )
 }
 
 #' @title Cramer-von Mises Normality Test
@@ -550,37 +550,37 @@ ad.test <- function(x) {
 #' @family normality_test
 #' @export
 cvm.test <- function(x) {
-    DNAME <- deparse(substitute(x))
-    x <- sort(x[stats::complete.cases(x)])
-    n <- length(x)
-    if (n < 8) {
-        stop("sample size must be greater than 7")
-    }
-    p <- stats::pnorm((x - mean(x)) / stats::sd(x))
-    W <- (1 / (12 * n) + sum((p - (2 * seq_len(n) - 1) / (2 * n))^2))
-    WW <- (1 + 0.5 / n) * W
-    if (WW < 0.0275) {
-        pval <- 1 - exp(-13.953 + 775.5 * WW - 12542.61 * WW^2)
-    } else if (WW < 0.051) {
-        pval <- 1 - exp(-5.903 + 179.546 * WW - 1515.29 * WW^2)
-    } else if (WW < 0.092) {
-        pval <- exp(0.886 - 31.62 * WW + 10.897 * WW^2)
-    } else if (WW < 1.1) {
-        pval <- exp(1.111 - 34.242 * WW + 12.832 * WW^2)
-    } else {
-        warning(
-            "p-value is smaller than 7.37e-10, cannot be computed more accurately"
-        )
-        pval <- 7.37e-10
-    }
-    RVAL <- list(
-        statistic = c(W = W),
-        p.value = pval,
-        method = "Cramer-von Mises normality test",
-        data.name = DNAME
+  DNAME <- deparse(substitute(x))
+  x <- sort(x[stats::complete.cases(x)])
+  n <- length(x)
+  if (n < 8) {
+    stop("sample size must be greater than 7")
+  }
+  p <- stats::pnorm((x - mean(x)) / stats::sd(x))
+  W <- (1 / (12 * n) + sum((p - (2 * seq_len(n) - 1) / (2 * n))^2))
+  WW <- (1 + 0.5 / n) * W
+  if (WW < 0.0275) {
+    pval <- 1 - exp(-13.953 + 775.5 * WW - 12542.61 * WW^2)
+  } else if (WW < 0.051) {
+    pval <- 1 - exp(-5.903 + 179.546 * WW - 1515.29 * WW^2)
+  } else if (WW < 0.092) {
+    pval <- exp(0.886 - 31.62 * WW + 10.897 * WW^2)
+  } else if (WW < 1.1) {
+    pval <- exp(1.111 - 34.242 * WW + 12.832 * WW^2)
+  } else {
+    warning(
+      "p-value is smaller than 7.37e-10, cannot be computed more accurately"
     )
-    class(RVAL) <- "htest"
-    return(RVAL)
+    pval <- 7.37e-10
+  }
+  RVAL <- list(
+    statistic = c(W = W),
+    p.value = pval,
+    method = "Cramer-von Mises normality test",
+    data.name = DNAME
+  )
+  class(RVAL) <- "htest"
+  return(RVAL)
 }
 
 #' @title Pearson Chi-Square Normality Test
@@ -671,37 +671,37 @@ cvm.test <- function(x) {
 #' @export
 #'
 pearson.test <- function(
-    x,
-    n.classes = ceiling(2 * (n^(2 / 5))),
-    adjust = TRUE
+  x,
+  n.classes = ceiling(2 * (n^(2 / 5))),
+  adjust = TRUE
 ) {
-    DNAME <- deparse(substitute(x))
-    x <- x[stats::complete.cases(x)]
-    n <- length(x)
-    if (adjust) {
-        dfd <- 2
-    } else {
-        dfd <- 0
-    }
-    num <- floor(1 + n.classes * stats::pnorm(x, mean(x), stats::sd(x)))
-    count <- tabulate(num, n.classes)
-    prob <- rep(1 / n.classes, n.classes)
-    xpec <- n * prob
-    h <- ((count - xpec)^2) / xpec
-    P <- sum(h)
-    pvalue <- stats::pchisq(P, n.classes - dfd - 1, lower.tail = FALSE)
-    RVAL <- list(
-        statistic = c(P = P),
-        p.value = pvalue,
-        method = "Pearson chi-square normality test",
-        data.name = DNAME,
-        n.classes = n.classes,
-        df = n.classes -
-            1 -
-            dfd
-    )
-    class(RVAL) <- "htest"
-    return(RVAL)
+  DNAME <- deparse(substitute(x))
+  x <- x[stats::complete.cases(x)]
+  n <- length(x)
+  if (adjust) {
+    dfd <- 2
+  } else {
+    dfd <- 0
+  }
+  num <- floor(1 + n.classes * stats::pnorm(x, mean(x), stats::sd(x)))
+  count <- tabulate(num, n.classes)
+  prob <- rep(1 / n.classes, n.classes)
+  xpec <- n * prob
+  h <- ((count - xpec)^2) / xpec
+  P <- sum(h)
+  pvalue <- stats::pchisq(P, n.classes - dfd - 1, lower.tail = FALSE)
+  RVAL <- list(
+    statistic = c(P = P),
+    p.value = pvalue,
+    method = "Pearson chi-square normality test",
+    data.name = DNAME,
+    n.classes = n.classes,
+    df = n.classes -
+      1 -
+      dfd
+  )
+  class(RVAL) <- "htest"
+  return(RVAL)
 }
 
 #' @title Shapiro-Francia Normality Test
@@ -793,26 +793,26 @@ pearson.test <- function(
 #' @export
 #'
 sf.test <- function(x) {
-    DNAME <- deparse(substitute(x))
-    x <- sort(x[stats::complete.cases(x)])
-    n <- length(x)
-    if ((n < 5 || n > 5000)) {
-        stop("sample size must be between 5 and 5000")
-    }
-    y <- stats::qnorm(stats::ppoints(n, a = 3 / 8))
-    W <- stats::cor(x, y)^2
-    u <- log(n)
-    v <- log(u)
-    mu <- -1.2725 + 1.0521 * (v - u)
-    sig <- 1.0308 - 0.26758 * (v + 2 / u)
-    z <- (log(1 - W) - mu) / sig
-    pval <- stats::pnorm(z, lower.tail = FALSE)
-    RVAL <- list(
-        statistic = c(W = W),
-        p.value = pval,
-        method = "Shapiro-Francia normality test",
-        data.name = DNAME
-    )
-    class(RVAL) <- "htest"
-    return(RVAL)
+  DNAME <- deparse(substitute(x))
+  x <- sort(x[stats::complete.cases(x)])
+  n <- length(x)
+  if ((n < 5 || n > 5000)) {
+    stop("sample size must be between 5 and 5000")
+  }
+  y <- stats::qnorm(stats::ppoints(n, a = 3 / 8))
+  W <- stats::cor(x, y)^2
+  u <- log(n)
+  v <- log(u)
+  mu <- -1.2725 + 1.0521 * (v - u)
+  sig <- 1.0308 - 0.26758 * (v + 2 / u)
+  z <- (log(1 - W) - mu) / sig
+  pval <- stats::pnorm(z, lower.tail = FALSE)
+  RVAL <- list(
+    statistic = c(W = W),
+    p.value = pval,
+    method = "Shapiro-Francia normality test",
+    data.name = DNAME
+  )
+  class(RVAL) <- "htest"
+  return(RVAL)
 }

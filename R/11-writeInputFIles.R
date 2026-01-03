@@ -59,94 +59,94 @@
 #' @references Johnson TS, Yu CY, Huang Z, Xu S, Wang T, Dong C, et al. Diagnostic Evidence GAuge of Single cells (DEGAS): a flexible deep transfer learning framework for prioritizing cells in relation to disease. Genome Med. 2022 Feb 1;14(1):11.
 #'
 writeInputFiles.optimized <- function(
-    scExp,
-    scLab = NULL,
-    patExp,
-    patLab = NULL,
-    tmpDir
+  scExp,
+  scLab = NULL,
+  patExp,
+  patLab = NULL,
+  tmpDir
 ) {
-    if (!dir.exists(tmpDir)) {
-        dir.create(tmpDir, recursive = TRUE)
-    }
+  if (!dir.exists(tmpDir)) {
+    dir.create(tmpDir, recursive = TRUE)
+  }
 
-    file_writing_ops <- purrr::safely(
-        ~ {
-            # Convert scExp to data.table for fast writing
-            if (inherits(scExp, "matrix") || inherits(scExp, "Matrix")) {
-                scExp_dt <- data.table::as.data.table(as.matrix(scExp))
-            } else {
-                scExp_dt <- data.table::as.data.table(scExp)
-            }
+  file_writing_ops <- purrr::safely(
+    ~ {
+      # Convert scExp to data.table for fast writing
+      if (inherits(scExp, "matrix") || inherits(scExp, "Matrix")) {
+        scExp_dt <- data.table::as.data.table(as.matrix(scExp))
+      } else {
+        scExp_dt <- data.table::as.data.table(scExp)
+      }
 
-            # Write scExp using data.table's fwrite (much faster than write.table)
-            data.table::fwrite(
-                scExp_dt,
-                file = file.path(tmpDir, 'scExp.csv'),
-                row.names = FALSE,
-                sep = ',',
-                showProgress = FALSE
-            )
+      # Write scExp using data.table's fwrite (much faster than write.table)
+      data.table::fwrite(
+        scExp_dt,
+        file = file.path(tmpDir, 'scExp.csv'),
+        row.names = FALSE,
+        sep = ',',
+        showProgress = FALSE
+      )
 
-            # Process scLab if not NULL
-            if (!is.null(scLab)) {
-                if (inherits(scLab, "matrix") || inherits(scLab, "Matrix")) {
-                    scLab_dt <- data.table::as.data.table(as.matrix(scLab))
-                } else {
-                    scLab_dt <- data.table::as.data.table(scLab)
-                }
-                scLab_dt[, names(scLab_dt) := lapply(.SD, as.integer)] # Convert to integer from boolean
-
-                data.table::fwrite(
-                    scLab_dt,
-                    file = file.path(tmpDir, 'scLab.csv'),
-                    row.names = FALSE,
-                    sep = ',',
-                    showProgress = FALSE
-                )
-            }
-
-            # Convert patExp to data.table
-            if (inherits(patExp, "matrix") || inherits(patExp, "Matrix")) {
-                patExp_dt <- data.table::as.data.table(as.matrix(patExp))
-            } else {
-                patExp_dt <- data.table::as.data.table(patExp)
-            }
-
-            # Write patExp
-            data.table::fwrite(
-                patExp_dt,
-                file = file.path(tmpDir, 'patExp.csv'),
-                row.names = FALSE,
-                sep = ',',
-                showProgress = FALSE
-            )
-
-            # Process patLab if not NULL
-            if (!is.null(patLab)) {
-                if (inherits(patLab, "matrix") || inherits(patLab, "Matrix")) {
-                    patLab_dt <- data.table::as.data.table(as.matrix(patLab))
-                } else {
-                    patLab_dt <- data.table::as.data.table(patLab)
-                }
-                patLab_dt[, names(patLab_dt) := lapply(.SD, as.integer)] # Convert to integer from boolean
-
-                data.table::fwrite(
-                    patLab_dt,
-                    file = file.path(tmpDir, 'patLab.csv'),
-                    row.names = FALSE,
-                    sep = ',',
-                    showProgress = FALSE
-                )
-            }
+      # Process scLab if not NULL
+      if (!is.null(scLab)) {
+        if (inherits(scLab, "matrix") || inherits(scLab, "Matrix")) {
+          scLab_dt <- data.table::as.data.table(as.matrix(scLab))
+        } else {
+          scLab_dt <- data.table::as.data.table(scLab)
         }
-    )
+        scLab_dt[, names(scLab_dt) := lapply(.SD, as.integer)] # Convert to integer from boolean
 
-    # Execute file writing operations with error handling
-    result <- file_writing_ops()
+        data.table::fwrite(
+          scLab_dt,
+          file = file.path(tmpDir, 'scLab.csv'),
+          row.names = FALSE,
+          sep = ',',
+          showProgress = FALSE
+        )
+      }
 
-    if (!is.null(result$error)) {
-        cli::cli_abort("Failed to write input files: ", result$error$message)
+      # Convert patExp to data.table
+      if (inherits(patExp, "matrix") || inherits(patExp, "Matrix")) {
+        patExp_dt <- data.table::as.data.table(as.matrix(patExp))
+      } else {
+        patExp_dt <- data.table::as.data.table(patExp)
+      }
+
+      # Write patExp
+      data.table::fwrite(
+        patExp_dt,
+        file = file.path(tmpDir, 'patExp.csv'),
+        row.names = FALSE,
+        sep = ',',
+        showProgress = FALSE
+      )
+
+      # Process patLab if not NULL
+      if (!is.null(patLab)) {
+        if (inherits(patLab, "matrix") || inherits(patLab, "Matrix")) {
+          patLab_dt <- data.table::as.data.table(as.matrix(patLab))
+        } else {
+          patLab_dt <- data.table::as.data.table(patLab)
+        }
+        patLab_dt[, names(patLab_dt) := lapply(.SD, as.integer)] # Convert to integer from boolean
+
+        data.table::fwrite(
+          patLab_dt,
+          file = file.path(tmpDir, 'patLab.csv'),
+          row.names = FALSE,
+          sep = ',',
+          showProgress = FALSE
+        )
+      }
     }
+  )
 
-    invisible(TRUE)
+  # Execute file writing operations with error handling
+  result <- file_writing_ops()
+
+  if (!is.null(result$error)) {
+    cli::cli_abort("Failed to write input files: ", result$error$message)
+  }
+
+  invisible(TRUE)
 }

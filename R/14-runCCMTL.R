@@ -57,97 +57,97 @@
 #' @references Johnson TS, Yu CY, Huang Z, Xu S, Wang T, Dong C, et al. Diagnostic Evidence GAuge of Single cells (DEGAS): a flexible deep transfer learning framework for prioritizing cells in relation to disease. Genome Med. 2022 Feb 1;14(1):11.
 #'
 runCCMTL.optimized <- function(
-    scExp,
-    scLab,
-    patExp,
-    patLab,
-    tmpDir,
-    model_type,
-    architecture,
-    FFdepth,
-    DEGAS.seed,
-    force_rewrite = FALSE,
-    verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE
+  scExp,
+  scLab,
+  patExp,
+  patLab,
+  tmpDir,
+  model_type,
+  architecture,
+  FFdepth,
+  DEGAS.seed,
+  force_rewrite = FALSE,
+  verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE
 ) {
-    # Only write files if explicitly requested
-    if (force_rewrite) {
-        if (dir.exists(tmpDir)) {
-            unlink(tmpDir, recursive = TRUE, force = TRUE)
-        }
-        dir.create(tmpDir, recursive = TRUE, showWarnings = FALSE)
-        # Write input files
-        writeInputFiles.optimized(
-            scExp = scExp,
-            scLab = scLab,
-            patExp = patExp,
-            patLab = patLab,
-            tmpDir = tmpDir
-        )
+  # Only write files if explicitly requested
+  if (force_rewrite) {
+    if (dir.exists(tmpDir)) {
+      unlink(tmpDir, recursive = TRUE, force = TRUE)
     }
-
-    # create python files
-    if (!architecture %chin% c("DenseNet", "Standard")) {
-        cli::cli_abort(c("x" = 'Incorrect architecture argument'))
-    } else if (architecture == "DenseNet") {
-        makeExec2(
-            tmpDir = tmpDir,
-            FFdepth = FFdepth,
-            model_type = model_type
-        )
-    } else {
-        makeExec(
-            tmpDir = tmpDir,
-            FFdepth = FFdepth,
-            model_type = model_type
-        )
-    }
-
-    # cmd <- paste0(
-    #     DEGAS.pyloc,
-    #     " ",
-    #     tmpDir,
-    #     model_type,
-    #     "MTL.py",
-    #     paste(
-    #         "",
-    #         tmpDir,
-    #         DEGAS.train_steps,
-    #         DEGAS.scbatch_sz,
-    #         DEGAS.patbatch_sz,
-    #         DEGAS.hidden_feats,
-    #         DEGAS.do_prc,
-    #         DEGAS.lambda1,
-    #         DEGAS.lambda2,
-    #         DEGAS.lambda3,
-    #         DEGAS.seed
-    #     )
-    # )
-    cmd_args <- as.character(c(
-        paste0(tmpDir, model_type, "MTL.py"),
-        tmpDir,
-        DEGAS.train_steps,
-        DEGAS.scbatch_sz,
-        DEGAS.patbatch_sz,
-        DEGAS.hidden_feats,
-        DEGAS.do_prc,
-        DEGAS.lambda1,
-        DEGAS.lambda2,
-        DEGAS.lambda3,
-        DEGAS.seed
-    ))
-
-    # * Execute system command
-    # system(command = cmd) # if processx::run failed, use `system` instead
-    result <- processx::run(
-        command = DEGAS.pyloc,
-        args = cmd_args,
-        echo = verbose,
-        error_on_status = TRUE
+    dir.create(tmpDir, recursive = TRUE, showWarnings = FALSE)
+    # Write input files
+    writeInputFiles.optimized(
+      scExp = scExp,
+      scLab = scLab,
+      patExp = patExp,
+      patLab = patLab,
+      tmpDir = tmpDir
     )
+  }
 
-    readOutputFiles.optimized(
-        tmpDir = tmpDir,
-        model_type = model_type,
-        architecture = architecture
+  # create python files
+  if (!architecture %chin% c("DenseNet", "Standard")) {
+    cli::cli_abort(c("x" = 'Incorrect architecture argument'))
+  } else if (architecture == "DenseNet") {
+    makeExec2(
+      tmpDir = tmpDir,
+      FFdepth = FFdepth,
+      model_type = model_type
     )
+  } else {
+    makeExec(
+      tmpDir = tmpDir,
+      FFdepth = FFdepth,
+      model_type = model_type
+    )
+  }
+
+  # cmd <- paste0(
+  #     DEGAS.pyloc,
+  #     " ",
+  #     tmpDir,
+  #     model_type,
+  #     "MTL.py",
+  #     paste(
+  #         "",
+  #         tmpDir,
+  #         DEGAS.train_steps,
+  #         DEGAS.scbatch_sz,
+  #         DEGAS.patbatch_sz,
+  #         DEGAS.hidden_feats,
+  #         DEGAS.do_prc,
+  #         DEGAS.lambda1,
+  #         DEGAS.lambda2,
+  #         DEGAS.lambda3,
+  #         DEGAS.seed
+  #     )
+  # )
+  cmd_args <- as.character(c(
+    paste0(tmpDir, model_type, "MTL.py"),
+    tmpDir,
+    DEGAS.train_steps,
+    DEGAS.scbatch_sz,
+    DEGAS.patbatch_sz,
+    DEGAS.hidden_feats,
+    DEGAS.do_prc,
+    DEGAS.lambda1,
+    DEGAS.lambda2,
+    DEGAS.lambda3,
+    DEGAS.seed
+  ))
+
+  # * Execute system command
+  # system(command = cmd) # if processx::run failed, use `system` instead
+  result <- processx::run(
+    command = DEGAS.pyloc,
+    args = cmd_args,
+    echo = verbose,
+    error_on_status = TRUE
+  )
+
+  readOutputFiles.optimized(
+    tmpDir = tmpDir,
+    model_type = model_type,
+    architecture = architecture
+  )
 }

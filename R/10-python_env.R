@@ -49,7 +49,7 @@
 #' @export
 #'
 SetupPyEnv <- function(env_type = c("conda", "venv"), ...) {
-    UseMethod("SetupPyEnv")
+  UseMethod("SetupPyEnv")
 }
 
 
@@ -60,18 +60,18 @@ SetupPyEnv <- function(env_type = c("conda", "venv"), ...) {
 #'
 #' @export
 SetupPyEnv.default <- function(
-    env_type = c("conda", "venv"),
-    ...
+  env_type = c("conda", "venv"),
+  ...
 ) {
-    switch(
-        tolower(env_type),
-        "conda" = SetupPyEnv.conda(env_type = "conda", ...),
-        "venv" = SetupPyEnv.venv(env_type = "venv", ...),
-        cli::cli_abort(c(
-            "x" = "Unsupported environment type: {.val {env_type}}",
-            "i" = "Supported environment types are: conda, venv"
-        ))
-    )
+  switch(
+    tolower(env_type),
+    "conda" = SetupPyEnv.conda(env_type = "conda", ...),
+    "venv" = SetupPyEnv.venv(env_type = "venv", ...),
+    cli::cli_abort(c(
+      "x" = "Unsupported environment type: {.val {env_type}}",
+      "i" = "Supported environment types are: conda, venv"
+    ))
+  )
 }
 
 #' @title Setup Conda Python Environment
@@ -146,316 +146,316 @@ SetupPyEnv.default <- function(
 #' @method SetupPyEnv conda
 #' @export
 SetupPyEnv.conda <- function(
-    env_type = "conda",
-    env_name = "r-reticulate-degas",
-    method = c("reticulate", "system", "environment"),
-    env_file = NULL,
-    python_version = "3.9.15",
-    packages = c(
-        "tensorflow" = "2.4.1",
-        "protobuf" = "3.20.3"
-    ),
-    recreate = FALSE,
-    use_conda_forge = TRUE,
-    ...
+  env_type = "conda",
+  env_name = "r-reticulate-degas",
+  method = c("reticulate", "system", "environment"),
+  env_file = NULL,
+  python_version = "3.9.15",
+  packages = c(
+    "tensorflow" = "2.4.1",
+    "protobuf" = "3.20.3"
+  ),
+  recreate = FALSE,
+  use_conda_forge = TRUE,
+  ...
 ) {
-    purrr::walk(
-        list(env_type, env_name, python_version),
-        ~ chk::chk_character
-    )
-    purrr::walk(
-        list(recreate, use_conda_forge, verbose),
-        ~ chk::chk_flag
-    )
-    if (!is.null(packages)) {
-        chk::chk_named(packages)
+  purrr::walk(
+    list(env_type, env_name, python_version),
+    ~ chk::chk_character
+  )
+  purrr::walk(
+    list(recreate, use_conda_forge, verbose),
+    ~ chk::chk_flag
+  )
+  if (!is.null(packages)) {
+    chk::chk_named(packages)
+  }
+
+  dots <- rlang::list2(...)
+  verbose <- dots$verbose %||% SigBridgeRUtils::getFuncOption("verbose")
+  timeout <- dots$timeout %||% SigBridgeRUtils::getFuncOption("timeout")
+  #   Default method is `reticulate`
+  method <- SigBridgeRUtils::MatchArg(
+    method,
+    c("reticulate", "system", "environment")
+  )
+
+  if (verbose) {
+    cli::cli_h1("Setting up Conda Python Environment")
+    cli::cli_alert_info("Environment name: {.val {env_name}}")
+    if (!is.null(python_version)) {
+      cli::cli_alert_info("Python version: {.val {python_version}}")
     }
+  }
 
-    dots <- rlang::list2(...)
-    verbose <- dots$verbose %||% SigBridgeRUtils::getFuncOption("verbose")
-    timeout <- dots$timeout %||% SigBridgeRUtils::getFuncOption("timeout")
-    #   Default method is `reticulate`
-    method <- SigBridgeRUtils::MatchArg(
-        method,
-        c("reticulate", "system", "environment")
-    )
+  envs <- ListPyEnv(env_type = "conda")
+  env_exists <- env_name %chin% envs$name
 
+  if (env_exists && recreate) {
     if (verbose) {
-        cli::cli_h1("Setting up Conda Python Environment")
-        cli::cli_alert_info("Environment name: {.val {env_name}}")
-        if (!is.null(python_version)) {
-            cli::cli_alert_info("Python version: {.val {python_version}}")
-        }
+      ts_cli$cli_alert_info(
+        "Force recreating conda environment: {.val {env_name}}"
+      )
     }
+    reticulate::conda_remove(env_name)
+    env_exists <- FALSE
+  }
 
-    envs <- ListPyEnv(env_type = "conda")
-    env_exists <- env_name %chin% envs$name
+  safely_run <- purrr::safely(processx::run)
+  safely_create <- purrr::safely(reticulate::conda_create)
 
-    if (env_exists && recreate) {
-        if (verbose) {
-            ts_cli$cli_alert_info(
-                "Force recreating conda environment: {.val {env_name}}"
-            )
-        }
-        reticulate::conda_remove(env_name)
-        env_exists <- FALSE
-    }
-
-    safely_run <- purrr::safely(processx::run)
-    safely_create <- purrr::safely(reticulate::conda_create)
-
-    # Create new conda environment
-    if (!env_exists) {
-        if (verbose) {
-            ts_cli$cli_alert_info(
-                "Creating new conda environment: {.val {env_name}}"
-            )
-        }
-
-        switch(
-            method,
-            "reticulate" = {
-                res <- safely_create(
-                    envname = env_name,
-                    python_version = python_version,
-                    channels = if (use_conda_forge) {
-                        "conda-forge"
-                    } else {
-                        NULL
-                    },
-                    conda = "auto"
-                )
-                if (!is.null(res$error)) {
-                    cli::cli_abort(c(
-                        "x" = "Environment creation failed via `reticulate`:",
-                        ">" = res$error
-                    ))
-                }
-            },
-            "system" = {
-                args <- c(
-                    "create",
-                    "-n",
-                    env_name,
-                    if (use_conda_forge) c("-c", "conda-forge"),
-                    paste0("python=", python_version),
-                    "-y",
-                    if (verbose) "-v"
-                )
-
-                create_res <- safely_run(
-                    command = "conda",
-                    args = args,
-                    error_on_status = FALSE,
-                    timeout = timeout,
-                    cleanup = TRUE,
-                    windows_verbatim_args = FALSE,
-                    echo = verbose,
-                    echo_cmd = verbose
-                )
-
-                # check status
-                if (!is.null(create_res$error)) {
-                    error_msg <- if (nzchar(create_res$result$stderr)) {
-                        create_res$result$stderr
-                    } else {
-                        create_res$result$stdout
-                    }
-
-                    if (grepl("timeout", error_msg, ignore.case = TRUE)) {
-                        cli::cli_abort(c(
-                            "x" = "Conda environment creation timed out after {.val {timeout/1000/60}} minutes",
-                            ">" = "Consider increasing the timeout parameter or using a different method"
-                        ))
-                    } else {
-                        cli::cli_abort(c(
-                            "x" = "Environment creation failed via `system` (status {result$status}):",
-                            ">" = error_msg
-                        ))
-                    }
-                }
-                # print message
-                if (verbose && nzchar(create_res$result$stdout)) {
-                    message(paste(
-                        create_res$result$stdout,
-                        sep = "\n",
-                        collapse = "\n"
-                    ))
-                }
-                if (verbose) {
-                    cli::cli_alert_success(
-                        "Conda environment created successfully"
-                    )
-                }
-            },
-            "environment" = {
-                chk::chk_file(env_file)
-
-                create_res <- safely_create(
-                    envname = env_name,
-                    environment = env_file
-                )
-                if (!is.null(create_res$error)) {
-                    cli::cli_abort(c(
-                        "x" = "Environment creation failed via `environment`:",
-                        ">" = create_res$error
-                    ))
-                }
-            }
-        )
-    } else if (verbose) {
-        ts_cli$cli_alert_info(
-            "Using existing conda environment: {.val {env_name}}"
-        )
-    }
-
-    envs <- ListPyEnv(env_type = "conda")
-
-    reticulate::use_condaenv(
-        envs[envs$name == env_name, 'python'],
-        required = TRUE
-    )
-    # Install packages
-    if (length(packages) > 0 && method != "environment") {
-        if (verbose) {
-            ts_cli$cli_alert_info(
-                "Installing Python packages in conda environment"
-            )
-        }
-
-        switch(
-            method,
-            "reticulate" = {
-                packages_to_install_reticulate <- purrr::imap_chr(
-                    packages,
-                    ~ if (tolower(.x) == "any") .y else paste0(.y, "==", .x)
-                ) |>
-                    unique()
-
-                safely_py_install <- purrr::safely(reticulate::py_install)
-
-                install_res <- reticulate::py_install(
-                    packages = packages_to_install_reticulate,
-                    envname = env_name,
-                    method = "auto",
-                    pip = TRUE,
-                    pip_ignore_installed = TRUE
-                )
-                if (!is.null(install_res$error)) {
-                    cli::cli_abort(c(
-                        "x" = "Failed to install packages in conda environment {.val {env_name}} via `reticulate`",
-                        ">" = install_res$error
-                    ))
-                }
-            },
-            "system" = {
-                packages_to_install_conda <- purrr::imap_chr(
-                    packages,
-                    ~ if (tolower(.x) == "any") .y else paste0(.y, "=", .x)
-                )
-
-                args <- c(
-                    "install",
-                    "-n",
-                    env_name,
-                    if (use_conda_forge) c("-c", "conda-forge"),
-                    packages_to_install_conda,
-                    "-y",
-                    if (verbose) "-v"
-                )
-
-                install_res <- safely_run(
-                    command = "conda",
-                    args = args,
-                    error_on_status = FALSE,
-                    timeout = timeout,
-                    cleanup = TRUE,
-                    windows_verbatim_args = FALSE,
-                    echo = verbose,
-                    echo_cmd = verbose
-                )
-
-                # check status
-                if (!is.null(install_res$error)) {
-                    error_msg <- if (nzchar(install_res$error$stderr)) {
-                        install_res$error$stderr
-                    } else {
-                        install_res$error$stdout
-                    }
-
-                    if (grepl("timeout", error_msg, ignore.case = TRUE)) {
-                        cli::cli_abort(c(
-                            "x" = "Package installation timed out after {.val {timeout/1000/60}} minutes",
-                            ">" = "Consider increasing the timeout parameter or installing packages separately"
-                        ))
-                    } else {
-                        cli::cli_abort(c(
-                            "x" = "Package installation failed via `system`:",
-                            ">" = error_msg
-                        ))
-                    }
-                }
-                # print message
-                if (verbose && nzchar(install_res$error$stdout)) {
-                    message(paste(
-                        install_res$error$stdout,
-                        sep = "\n",
-                        collapse = "\n"
-                    ))
-                }
-
-                if (verbose) {
-                    cli::cli_alert_success(
-                        "Packages installed successfully"
-                    )
-                }
-            }
-        )
-    }
-
+  # Create new conda environment
+  if (!env_exists) {
     if (verbose) {
-        ts_cli$cli_alert_info("Verifying environment setup...")
+      ts_cli$cli_alert_info(
+        "Creating new conda environment: {.val {env_name}}"
+      )
     }
 
-    # Use reticulate to verify the environment
-    verification_result <- rlang::try_fetch(
-        {
-            # Test Python availability
-            py_available <- reticulate::py_available(initialize = TRUE)
-            py_version <- reticulate::py_version()
-
-            if (py_available) {
-                if (verbose) {
-                    ts_cli$cli_alert_success(
-                        "Python {.val {py_version}} successfully initialized"
-                    )
-                }
-                TRUE
-            } else {
-                FALSE
-            }
-        },
-        error = function(e) {
-            cli::cli_alert_danger(
-                "Environment verification failed: {e$message}"
-            )
-            FALSE
+    switch(
+      method,
+      "reticulate" = {
+        res <- safely_create(
+          envname = env_name,
+          python_version = python_version,
+          channels = if (use_conda_forge) {
+            "conda-forge"
+          } else {
+            NULL
+          },
+          conda = "auto"
+        )
+        if (!is.null(res$error)) {
+          cli::cli_abort(c(
+            "x" = "Environment creation failed via `reticulate`:",
+            ">" = res$error
+          ))
         }
-    )
+      },
+      "system" = {
+        args <- c(
+          "create",
+          "-n",
+          env_name,
+          if (use_conda_forge) c("-c", "conda-forge"),
+          paste0("python=", python_version),
+          "-y",
+          if (verbose) "-v"
+        )
 
-    if (verbose) {
-        if (verification_result) {
-            ts_cli$cli_alert_info(cli::col_green(
-                "Conda environment {env_name} configured successfully!"
+        create_res <- safely_run(
+          command = "conda",
+          args = args,
+          error_on_status = FALSE,
+          timeout = timeout,
+          cleanup = TRUE,
+          windows_verbatim_args = FALSE,
+          echo = verbose,
+          echo_cmd = verbose
+        )
+
+        # check status
+        if (!is.null(create_res$error)) {
+          error_msg <- if (nzchar(create_res$result$stderr)) {
+            create_res$result$stderr
+          } else {
+            create_res$result$stdout
+          }
+
+          if (grepl("timeout", error_msg, ignore.case = TRUE)) {
+            cli::cli_abort(c(
+              "x" = "Conda environment creation timed out after {.val {timeout/1000/60}} minutes",
+              ">" = "Consider increasing the timeout parameter or using a different method"
             ))
-        } else {
-            cli::cli_warn(
-                "Conda environment created but verification failed"
-            )
+          } else {
+            cli::cli_abort(c(
+              "x" = "Environment creation failed via `system` (status {result$status}):",
+              ">" = error_msg
+            ))
+          }
         }
+        # print message
+        if (verbose && nzchar(create_res$result$stdout)) {
+          message(paste(
+            create_res$result$stdout,
+            sep = "\n",
+            collapse = "\n"
+          ))
+        }
+        if (verbose) {
+          cli::cli_alert_success(
+            "Conda environment created successfully"
+          )
+        }
+      },
+      "environment" = {
+        chk::chk_file(env_file)
+
+        create_res <- safely_create(
+          envname = env_name,
+          environment = env_file
+        )
+        if (!is.null(create_res$error)) {
+          cli::cli_abort(c(
+            "x" = "Environment creation failed via `environment`:",
+            ">" = create_res$error
+          ))
+        }
+      }
+    )
+  } else if (verbose) {
+    ts_cli$cli_alert_info(
+      "Using existing conda environment: {.val {env_name}}"
+    )
+  }
+
+  envs <- ListPyEnv(env_type = "conda")
+
+  reticulate::use_condaenv(
+    envs[envs$name == env_name, 'python'],
+    required = TRUE
+  )
+  # Install packages
+  if (length(packages) > 0 && method != "environment") {
+    if (verbose) {
+      ts_cli$cli_alert_info(
+        "Installing Python packages in conda environment"
+      )
     }
 
-    invisible()
+    switch(
+      method,
+      "reticulate" = {
+        packages_to_install_reticulate <- purrr::imap_chr(
+          packages,
+          ~ if (tolower(.x) == "any") .y else paste0(.y, "==", .x)
+        ) |>
+          unique()
+
+        safely_py_install <- purrr::safely(reticulate::py_install)
+
+        install_res <- reticulate::py_install(
+          packages = packages_to_install_reticulate,
+          envname = env_name,
+          method = "auto",
+          pip = TRUE,
+          pip_ignore_installed = TRUE
+        )
+        if (!is.null(install_res$error)) {
+          cli::cli_abort(c(
+            "x" = "Failed to install packages in conda environment {.val {env_name}} via `reticulate`",
+            ">" = install_res$error
+          ))
+        }
+      },
+      "system" = {
+        packages_to_install_conda <- purrr::imap_chr(
+          packages,
+          ~ if (tolower(.x) == "any") .y else paste0(.y, "=", .x)
+        )
+
+        args <- c(
+          "install",
+          "-n",
+          env_name,
+          if (use_conda_forge) c("-c", "conda-forge"),
+          packages_to_install_conda,
+          "-y",
+          if (verbose) "-v"
+        )
+
+        install_res <- safely_run(
+          command = "conda",
+          args = args,
+          error_on_status = FALSE,
+          timeout = timeout,
+          cleanup = TRUE,
+          windows_verbatim_args = FALSE,
+          echo = verbose,
+          echo_cmd = verbose
+        )
+
+        # check status
+        if (!is.null(install_res$error)) {
+          error_msg <- if (nzchar(install_res$error$stderr)) {
+            install_res$error$stderr
+          } else {
+            install_res$error$stdout
+          }
+
+          if (grepl("timeout", error_msg, ignore.case = TRUE)) {
+            cli::cli_abort(c(
+              "x" = "Package installation timed out after {.val {timeout/1000/60}} minutes",
+              ">" = "Consider increasing the timeout parameter or installing packages separately"
+            ))
+          } else {
+            cli::cli_abort(c(
+              "x" = "Package installation failed via `system`:",
+              ">" = error_msg
+            ))
+          }
+        }
+        # print message
+        if (verbose && nzchar(install_res$error$stdout)) {
+          message(paste(
+            install_res$error$stdout,
+            sep = "\n",
+            collapse = "\n"
+          ))
+        }
+
+        if (verbose) {
+          cli::cli_alert_success(
+            "Packages installed successfully"
+          )
+        }
+      }
+    )
+  }
+
+  if (verbose) {
+    ts_cli$cli_alert_info("Verifying environment setup...")
+  }
+
+  # Use reticulate to verify the environment
+  verification_result <- rlang::try_fetch(
+    {
+      # Test Python availability
+      py_available <- reticulate::py_available(initialize = TRUE)
+      py_version <- reticulate::py_version()
+
+      if (py_available) {
+        if (verbose) {
+          ts_cli$cli_alert_success(
+            "Python {.val {py_version}} successfully initialized"
+          )
+        }
+        TRUE
+      } else {
+        FALSE
+      }
+    },
+    error = function(e) {
+      cli::cli_alert_danger(
+        "Environment verification failed: {e$message}"
+      )
+      FALSE
+    }
+  )
+
+  if (verbose) {
+    if (verification_result) {
+      ts_cli$cli_alert_info(cli::col_green(
+        "Conda environment {env_name} configured successfully!"
+      ))
+    } else {
+      cli::cli_warn(
+        "Conda environment created but verification failed"
+      )
+    }
+  }
+
+  invisible()
 }
 
 #' @title Setup Virtual Environment (venv)
@@ -525,130 +525,130 @@ SetupPyEnv.conda <- function(
 #' @export
 #'
 SetupPyEnv.venv <- function(
-    env_type = "venv",
-    env_name = "r-reticulate-degas",
-    python_version = "3.9.15",
-    packages = c("tensorflow" = "2.4.1", "protobuf" = "3.20.3"),
-    python_path = NULL,
-    recreate = FALSE,
-    ...
+  env_type = "venv",
+  env_name = "r-reticulate-degas",
+  python_version = "3.9.15",
+  packages = c("tensorflow" = "2.4.1", "protobuf" = "3.20.3"),
+  python_path = NULL,
+  recreate = FALSE,
+  ...
 ) {
-    # Input validation
-    purrr::walk(
-        list(env_type, env_name, python_version),
-        ~ chk::chk_character
-    )
-    purrr::walk(
-        list(recreate, verbose),
-        ~ chk::chk_flag
-    )
-    chk::chk_named(packages)
-    if (!is.null(python_path)) {
-        chk::chk_file(python_path)
-    }
-    dots <- rlang::list2(...)
-    verbose <- dots$verbose %||% SigBridgeRUtils::getFuncOption("verbose")
+  # Input validation
+  purrr::walk(
+    list(env_type, env_name, python_version),
+    ~ chk::chk_character
+  )
+  purrr::walk(
+    list(recreate, verbose),
+    ~ chk::chk_flag
+  )
+  chk::chk_named(packages)
+  if (!is.null(python_path)) {
+    chk::chk_file(python_path)
+  }
+  dots <- rlang::list2(...)
+  verbose <- dots$verbose %||% SigBridgeRUtils::getFuncOption("verbose")
 
+  if (verbose) {
+    cli::cli_h1("Setting up Venv Python Environment")
+    cli::cli_alert_info("Environment name: {.val {env_name}}")
+    if (!is.null(python_version)) {
+      cli::cli_alert_info("Python version: {.val {python_version}}")
+    }
+  }
+
+  # Check if environment exists
+  env_dir <- Sys.getenv("WORKON_HOME", "~/.virtualenvs")
+  env_full_path <- file.path(path.expand(env_dir), env_name)
+  env_exists <- dir.exists(env_full_path)
+
+  # Handle existing environment based on recreate flag
+  if (env_exists && recreate) {
     if (verbose) {
-        cli::cli_h1("Setting up Venv Python Environment")
-        cli::cli_alert_info("Environment name: {.val {env_name}}")
-        if (!is.null(python_version)) {
-            cli::cli_alert_info("Python version: {.val {python_version}}")
-        }
+      ts_cli$cli_alert_info(
+        "Force recreating venv environment: {.val {env_name}}"
+      )
     }
+    reticulate::virtualenv_remove(envname = env_name, confirm = FALSE)
+    unlink(env_full_path, recursive = TRUE)
+    env_exists <- FALSE
+  }
 
-    # Check if environment exists
-    env_dir <- Sys.getenv("WORKON_HOME", "~/.virtualenvs")
-    env_full_path <- file.path(path.expand(env_dir), env_name)
-    env_exists <- dir.exists(env_full_path)
-
-    # Handle existing environment based on recreate flag
-    if (env_exists && recreate) {
-        if (verbose) {
-            ts_cli$cli_alert_info(
-                "Force recreating venv environment: {.val {env_name}}"
-            )
-        }
-        reticulate::virtualenv_remove(envname = env_name, confirm = FALSE)
-        unlink(env_full_path, recursive = TRUE)
-        env_exists <- FALSE
-    }
-
-    # Create new environment if it doesn't exist
-    if (!env_exists) {
-        if (verbose) {
-            ts_cli$cli_alert_info(
-                "Creating new venv environment: {.val {env_name}}"
-            )
-        }
-
-        # Determine Python path
-        if (is.null(python_path)) {
-            reticulate::install_python(version = python_version)
-        }
-
-        # Create venv environment
-        reticulate::virtualenv_create(
-            envname = env_name,
-            python = python_version,
-            packages = NULL,
-            virtualenv = "venv"
-        )
-    } else if (verbose) {
-        ts_cli$cli_alert_info(
-            "Using existing venv environment: {.val {env_name}}"
-        )
-    }
-
-    # Install required packages
-    if (length(packages) > 0) {
-        if (verbose) {
-            ts_cli$cli_alert_info(
-                "Installing Python packages in venv environment"
-            )
-        }
-
-        # Switch to target environment
-        reticulate::use_virtualenv(
-            virtualenv = env_name,
-            required = TRUE
-        )
-
-        # Format packages for installation using purrr
-        packages_to_install <- purrr::imap_chr(
-            packages,
-            ~ if (tolower(.x) == "any") .y else paste0(.y, "==", .x)
-        ) |>
-            unique()
-
-        reticulate::py_install(
-            packages = packages_to_install,
-            envname = env_name,
-            method = "virtualenv",
-            python_version = python_version
-        )
-    }
-
-    # Verify installation
-    pkg_names <- if (length(packages) > 0) names(packages) else character(0)
-    packages_to_verify <- unique(c(
-        pkg_names,
-        "functools",
-        "math"
-    ))
-
+  # Create new environment if it doesn't exist
+  if (!env_exists) {
     if (verbose) {
-        ts_cli$cli_alert_success(
-            "Venv environment {.val {env_name}} configured successfully!"
-        )
+      ts_cli$cli_alert_info(
+        "Creating new venv environment: {.val {env_name}}"
+      )
     }
 
-    reticulate::py_require(
-        packages = packages_to_install,
-        python_version = python_version,
+    # Determine Python path
+    if (is.null(python_path)) {
+      reticulate::install_python(version = python_version)
+    }
+
+    # Create venv environment
+    reticulate::virtualenv_create(
+      envname = env_name,
+      python = python_version,
+      packages = NULL,
+      virtualenv = "venv"
+    )
+  } else if (verbose) {
+    ts_cli$cli_alert_info(
+      "Using existing venv environment: {.val {env_name}}"
+    )
+  }
+
+  # Install required packages
+  if (length(packages) > 0) {
+    if (verbose) {
+      ts_cli$cli_alert_info(
+        "Installing Python packages in venv environment"
+      )
+    }
+
+    # Switch to target environment
+    reticulate::use_virtualenv(
+      virtualenv = env_name,
+      required = TRUE
     )
 
-    invisible()
+    # Format packages for installation using purrr
+    packages_to_install <- purrr::imap_chr(
+      packages,
+      ~ if (tolower(.x) == "any") .y else paste0(.y, "==", .x)
+    ) |>
+      unique()
+
+    reticulate::py_install(
+      packages = packages_to_install,
+      envname = env_name,
+      method = "virtualenv",
+      python_version = python_version
+    )
+  }
+
+  # Verify installation
+  pkg_names <- if (length(packages) > 0) names(packages) else character(0)
+  packages_to_verify <- unique(c(
+    pkg_names,
+    "functools",
+    "math"
+  ))
+
+  if (verbose) {
+    ts_cli$cli_alert_success(
+      "Venv environment {.val {env_name}} configured successfully!"
+    )
+  }
+
+  reticulate::py_require(
+    packages = packages_to_install,
+    python_version = python_version,
+  )
+
+  invisible()
 }
 
 
@@ -708,13 +708,13 @@ SetupPyEnv.venv <- function(
 #'
 #' @export
 ListPyEnv <- function(
-    env_type = c("all", "conda", "venv", "virtualenv"),
-    timeout = 30000,
-    venv_locations = c("~/.virtualenvs", "~/.venvs", "./venv", "./.venv"),
-    verbose = TRUE,
-    ...
+  env_type = c("all", "conda", "venv", "virtualenv"),
+  timeout = 30000,
+  venv_locations = c("~/.virtualenvs", "~/.venvs", "./venv", "./.venv"),
+  verbose = TRUE,
+  ...
 ) {
-    UseMethod("ListPyEnv")
+  UseMethod("ListPyEnv")
 }
 
 #' @rdname ListPyEnv
@@ -731,40 +731,40 @@ ListPyEnv <- function(
 #' @export
 #'
 ListPyEnv.default <- function(
-    env_type = c("all", "conda", "venv", "virtualenv"),
-    timeout = 30000,
-    venv_locations = c("~/.virtualenvs", "~/.venvs", "./venv", "./.venv"),
-    verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE,
-    ...
+  env_type = c("all", "conda", "venv", "virtualenv"),
+  timeout = 30000,
+  venv_locations = c("~/.virtualenvs", "~/.venvs", "./venv", "./.venv"),
+  verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE,
+  ...
 ) {
-    env_type <- SigBridgeRUtils::MatchArg(
-        env_type,
-        c("all", "conda", "venv", "virtualenv")
-    )
-    switch(
-        env_type,
-        "conda" = ListPyEnv.conda(
-            timeout = timeout,
-            verbose = verbose,
-            ...
-        ),
-        "virtualenv" = ListPyEnv.venv(venv_locations = venv_locations),
-        "venv" = ListPyEnv.venv(venv_locations = venv_locations),
-        "all" = rbind(
-            ListPyEnv.conda(
-                timeout = timeout,
-                verbose = verbose,
-                ...
-            ),
-            ListPyEnv.venv(
-                venv_locations = venv_locations
-            )
-        ),
-        cli::cli_abort(c(
-            "x" = "Invalid environment type: {.val {env_type}}",
-            "i" = "Valid types are: {.code all}, {.code conda} or {.code venv}"
-        ))
-    )
+  env_type <- SigBridgeRUtils::MatchArg(
+    env_type,
+    c("all", "conda", "venv", "virtualenv")
+  )
+  switch(
+    env_type,
+    "conda" = ListPyEnv.conda(
+      timeout = timeout,
+      verbose = verbose,
+      ...
+    ),
+    "virtualenv" = ListPyEnv.venv(venv_locations = venv_locations),
+    "venv" = ListPyEnv.venv(venv_locations = venv_locations),
+    "all" = rbind(
+      ListPyEnv.conda(
+        timeout = timeout,
+        verbose = verbose,
+        ...
+      ),
+      ListPyEnv.venv(
+        venv_locations = venv_locations
+      )
+    ),
+    cli::cli_abort(c(
+      "x" = "Invalid environment type: {.val {env_type}}",
+      "i" = "Valid types are: {.code all}, {.code conda} or {.code venv}"
+    ))
+  )
 }
 
 #' @rdname ListPyEnv
@@ -777,143 +777,143 @@ ListPyEnv.default <- function(
 #'
 #' @export
 ListPyEnv.conda <- function(
-    env_type = c("all", "conda", "venv", "virtualenv"),
-    timeout = 30000,
-    venv_locations = c("~/.virtualenvs", "~/.venvs", "./venv", "./.venv"),
-    verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE,
-    ...
+  env_type = c("all", "conda", "venv", "virtualenv"),
+  timeout = 30000,
+  venv_locations = c("~/.virtualenvs", "~/.venvs", "./venv", "./.venv"),
+  verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE,
+  ...
 ) {
-    methods <- c(
-        system = function() {
-            # Method1: system
-            process_result <- processx::run(
-                command = "conda",
-                args = c("info", "--envs"),
-                error_on_status = FALSE,
-                timeout = timeout,
-                cleanup = TRUE,
-                windows_verbatim_args = FALSE
-            )
+  methods <- c(
+    system = function() {
+      # Method1: system
+      process_result <- processx::run(
+        command = "conda",
+        args = c("info", "--envs"),
+        error_on_status = FALSE,
+        timeout = timeout,
+        cleanup = TRUE,
+        windows_verbatim_args = FALSE
+      )
 
-            if (process_result$status != 0) {
-                error_msg <- if (nzchar(process_result$stderr)) {
-                    process_result$stderr
-                } else {
-                    process_result$stdout
-                }
-
-                cli::cli_abort(c(
-                    "x" = "Conda command failed with status {process_result$status}:",
-                    ">" = "{error_msg}"
-                ))
-            }
-            conda_output <- strsplit(process_result$stdout, "\n")[[1]]
-
-            env_lines <- grep(
-                "^[a-zA-Z_]",
-                conda_output,
-                value = TRUE
-            )
-            env_lines <- gsub("\\*", "", env_lines) |>
-                trimws() |>
-                strsplit("\\s+")
-
-            if (length(env_lines) == 0) {
-                cli::cli_warn(
-                    "No Conda environments found, return empty result."
-                )
-                return(data.frame(
-                    name = character(),
-                    python = character(),
-                    type = character(),
-                ))
-            }
-
-            env_matrix <- do.call(rbind, env_lines)
-            env_names <- env_matrix[, 1]
-            env_paths <- env_matrix[, 2]
-
-            GetPythonPath <- function(path) {
-                if (is.na(path)) {
-                    return(NA_character_)
-                }
-                candidates <- if (.Platform$OS.type == "windows") {
-                    c("python.exe", "Scripts/python.exe")
-                } else {
-                    c("bin/python", "bin/python3")
-                }
-                for (candidate in candidates) {
-                    full_path <- file.path(path, candidate)
-                    if (file.exists(full_path)) {
-                        return(normalizePath(full_path, mustWork = FALSE))
-                    }
-                }
-                return(NA_character_)
-            }
-            python_paths <- vapply(env_paths, GetPythonPath, character(1))
-
-            conda_result <- data.frame(
-                name = env_names,
-                python = python_paths,
-                type = "conda",
-                stringsAsFactors = FALSE
-            )
-
-            if (!is.null(conda_result) && nrow(conda_result) > 0) {
-                return(conda_result)
-            }
-
-            cli::cli_warn(
-                "No conda environments found, return empty result."
-            )
-
-            data.frame(
-                name = character(),
-                python = character(),
-                type = character()
-            )
-        },
-        reticulate = function() {
-            # Method2: reticulate
-            cli::cli_warn(
-                "Failed to find conda environments via system command, trying reticulate as fallback."
-            )
-            conda_envs <- reticulate::conda_list()
-
-            if (!is.null(conda_envs) && nrow(conda_envs) > 0) {
-                conda_envs$type <- "conda"
-                return(conda_envs)
-            }
-
-            cli::cli_warn(
-                "No conda environments found, return empty result."
-            )
-
-            data.frame(
-                name = character(),
-                python = character(),
-                type = character()
-            )
-        },
-        default = function() {
-            cli::cli_warn(
-                "All methods have failed to find the conda environment, returning empty conda environment result ."
-            )
-            data.frame(
-                name = character(),
-                python = character(),
-                type = character()
-            )
+      if (process_result$status != 0) {
+        error_msg <- if (nzchar(process_result$stderr)) {
+          process_result$stderr
+        } else {
+          process_result$stdout
         }
-    ) |>
-        purrr::map(purrr::safely)
 
-    for (func_name in names(methods)) {
-        method_result <- methods[[func_name]]()
-        if (is.null(method_result$error) || func_name == "default") {
-            return(method_result$result)
+        cli::cli_abort(c(
+          "x" = "Conda command failed with status {process_result$status}:",
+          ">" = "{error_msg}"
+        ))
+      }
+      conda_output <- strsplit(process_result$stdout, "\n")[[1]]
+
+      env_lines <- grep(
+        "^[a-zA-Z_]",
+        conda_output,
+        value = TRUE
+      )
+      env_lines <- gsub("\\*", "", env_lines) |>
+        trimws() |>
+        strsplit("\\s+")
+
+      if (length(env_lines) == 0) {
+        cli::cli_warn(
+          "No Conda environments found, return empty result."
+        )
+        return(data.frame(
+          name = character(),
+          python = character(),
+          type = character(),
+        ))
+      }
+
+      env_matrix <- do.call(rbind, env_lines)
+      env_names <- env_matrix[, 1]
+      env_paths <- env_matrix[, 2]
+
+      GetPythonPath <- function(path) {
+        if (is.na(path)) {
+          return(NA_character_)
         }
+        candidates <- if (.Platform$OS.type == "windows") {
+          c("python.exe", "Scripts/python.exe")
+        } else {
+          c("bin/python", "bin/python3")
+        }
+        for (candidate in candidates) {
+          full_path <- file.path(path, candidate)
+          if (file.exists(full_path)) {
+            return(normalizePath(full_path, mustWork = FALSE))
+          }
+        }
+        return(NA_character_)
+      }
+      python_paths <- vapply(env_paths, GetPythonPath, character(1))
+
+      conda_result <- data.frame(
+        name = env_names,
+        python = python_paths,
+        type = "conda",
+        stringsAsFactors = FALSE
+      )
+
+      if (!is.null(conda_result) && nrow(conda_result) > 0) {
+        return(conda_result)
+      }
+
+      cli::cli_warn(
+        "No conda environments found, return empty result."
+      )
+
+      data.frame(
+        name = character(),
+        python = character(),
+        type = character()
+      )
+    },
+    reticulate = function() {
+      # Method2: reticulate
+      cli::cli_warn(
+        "Failed to find conda environments via system command, trying reticulate as fallback."
+      )
+      conda_envs <- reticulate::conda_list()
+
+      if (!is.null(conda_envs) && nrow(conda_envs) > 0) {
+        conda_envs$type <- "conda"
+        return(conda_envs)
+      }
+
+      cli::cli_warn(
+        "No conda environments found, return empty result."
+      )
+
+      data.frame(
+        name = character(),
+        python = character(),
+        type = character()
+      )
+    },
+    default = function() {
+      cli::cli_warn(
+        "All methods have failed to find the conda environment, returning empty conda environment result ."
+      )
+      data.frame(
+        name = character(),
+        python = character(),
+        type = character()
+      )
     }
+  ) |>
+    purrr::map(purrr::safely)
+
+  for (func_name in names(methods)) {
+    method_result <- methods[[func_name]]()
+    if (is.null(method_result$error) || func_name == "default") {
+      return(method_result$result)
+    }
+  }
 }
 
 #' @rdname ListPyEnv
@@ -930,44 +930,44 @@ ListPyEnv.conda <- function(
 #'
 #' @export
 ListPyEnv.venv <- function(
-    env_type = c("all", "conda", "venv", "virtualenv"),
-    timeout = 30000,
-    venv_locations = c("~/.virtualenvs", "~/.venvs", "./venv", "./.venv"),
-    verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE,
-    ...
+  env_type = c("all", "conda", "venv", "virtualenv"),
+  timeout = 30000,
+  venv_locations = c("~/.virtualenvs", "~/.venvs", "./venv", "./.venv"),
+  verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE,
+  ...
 ) {
-    venv_dirs <- c()
+  venv_dirs <- c()
 
-    for (location in venv_locations) {
-        expanded_path <- path.expand(location)
-        if (dir.exists(expanded_path)) {
-            dirs <- list.dirs(expanded_path, recursive = FALSE)
-            venv_dirs <- c(venv_dirs, dirs)
-        }
+  for (location in venv_locations) {
+    expanded_path <- path.expand(location)
+    if (dir.exists(expanded_path)) {
+      dirs <- list.dirs(expanded_path, recursive = FALSE)
+      venv_dirs <- c(venv_dirs, dirs)
     }
+  }
 
-    if (length(venv_dirs) > 0) {
-        return(data.frame(
-            name = basename(venv_dirs),
-            python = file.path(
-                venv_dirs,
-                ifelse(
-                    .Platform$OS.type == "windows",
-                    "Scripts/python.exe",
-                    "bin/python"
-                )
-            ),
-            type = "venv"
-        ))
-    }
+  if (length(venv_dirs) > 0) {
+    return(data.frame(
+      name = basename(venv_dirs),
+      python = file.path(
+        venv_dirs,
+        ifelse(
+          .Platform$OS.type == "windows",
+          "Scripts/python.exe",
+          "bin/python"
+        )
+      ),
+      type = "venv"
+    ))
+  }
 
-    cli::cli_warn(
-        "No venv found in {.val {venv_locations}}, return empty virtual environment result"
-    )
+  cli::cli_warn(
+    "No venv found in {.val {venv_locations}}, return empty virtual environment result"
+  )
 
-    data.frame(
-        name = character(),
-        python = character(),
-        type = character()
-    )
+  data.frame(
+    name = character(),
+    python = character(),
+    type = character()
+  )
 }

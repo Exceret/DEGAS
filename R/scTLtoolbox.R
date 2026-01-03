@@ -444,7 +444,7 @@ runDEGASatlas <- function(
     for (f in folds) {
         initDEGAS()
         set_seed_term(seed)
-        ccModel_tmp = runCCMTLBag(
+        ccModel_tmp = runCCMTLBag.optimized(
             scDat[f, ],
             scLab[f, ],
             patDat,

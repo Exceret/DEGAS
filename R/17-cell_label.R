@@ -89,145 +89,145 @@
 #' @family DEGAS
 #'
 LabelBinaryCells <- function(
-    pred_dt,
-    pheno_colnames,
-    select_fraction,
-    test_method,
-    min_threshold = 0.7, # Added minimum threshold parameter
-    verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE
+  pred_dt,
+  pheno_colnames,
+  select_fraction,
+  test_method,
+  min_threshold = 0.7, # Added minimum threshold parameter
+  verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE
 ) {
-    chk::chk_length(pheno_colnames, 2)
-    # Try to find the reference group in the column names
-    # If not found, use the second column as the reference group
-    ctrl_col <- grep(
-        "[Nn]on|[Nn]ormal|[Cc]ontrol|[Rr]ef|[Cc]trl|0",
-        pheno_colnames,
-        value = TRUE
-    )
-    if (length(ctrl_col) == 0) {
-        if (verbose) {
-            cli::cli_alert_info(
-                "Using {.val {pheno_colnames[2]}} as reference group"
-            )
-        }
-
-        pred_dt[, "diff" := .SD[[pheno_colnames[1]]] - .SD[[pheno_colnames[2]]]]
-    } else {
-        if (verbose) {
-            cli::cli_alert_info(
-                "Using {.val {ctrl_col}} as reference group"
-            )
-        }
-
-        pred_dt[,
-            "diff" := .SD[[setdiff(pheno_colnames, ctrl_col)]] -
-                .SD[[ctrl_col]]
-        ]
-    }
-
-    # Calculate difference using data.table operations
-
-    # Perform normality test with purrr pattern matching
-    normality_test_pval <- switch(
-        test_method,
-        "jarque-bera" = jb.test.modified(pred_dt$diff)$p.value,
-        "d'agostino" = dagostino.test(pred_dt$diff)$p.value[3],
-        "kolmogorov-smirnov" = stats::ks.test(pred_dt$diff, "pnorm")$p.value
-    )
-
-    # Apply labeling based on normality test result
-    pred_dt[,
-        "label" := {
-            if (normality_test_pval < 0.05) {
-                # Use quantile-based selection for non-normal distributions
-                n_positive <- ceiling(.N * select_fraction)
-                sorted_indices <- order(diff, decreasing = TRUE)
-                positive_positions <- sorted_indices[seq_len(n_positive)]
-
-                # Calculate original threshold
-                original_thresh <- round(
-                    diff[positive_positions[n_positive]],
-                    4
-                )
-
-                # Apply minimum threshold constraint
-                if (original_thresh < min_threshold) {
-                    # Filter positions to only include cells above min_threshold
-                    above_min_thresh <- which(diff > min_threshold)
-
-                    # Take intersection with top fraction positions
-                    valid_positions <- intersect(
-                        positive_positions,
-                        above_min_thresh
-                    )
-
-                    # Update actual number of positive cells
-                    actual_n_positive <- length(valid_positions)
-                    actual_thresh <- min_threshold
-
-                    if (verbose) {
-                        cli::cli_alert_info(
-                            "Original threshold {.val {original_thresh}} below minimum {.val {min_threshold}}, using {.val {actual_thresh}} instead"
-                        )
-                    }
-                } else {
-                    valid_positions <- positive_positions
-                    actual_thresh <- original_thresh
-                    actual_n_positive <- n_positive
-                }
-
-                if (verbose) {
-                    cli::cli_alert_info(
-                        "Scores over {.val {actual_thresh}} are considered `Positive`."
-                    )
-                }
-
-                # Create labels using vectorized operations
-                labels <- rep("Other", .N)
-                labels[valid_positions] <- "Positive"
-                labels
-            } else {
-                # Use normal distribution-based selection
-                mean_val <- SigBridgeRUtils::colMeans3(as.matrix(diff))
-                sd_val <- SigBridgeRUtils::colSds3(as.matrix(diff))
-                quantile_val <- stats::qnorm(
-                    select_fraction,
-                    mean = mean_val,
-                    sd = sd_val,
-                    lower.tail = FALSE
-                )
-
-                # Apply minimum threshold constraint
-                actual_thresh <- max(quantile_val, min_threshold)
-
-                if (quantile_val < min_threshold && verbose) {
-                    cli::cli_alert_info(
-                        "Original threshold {.val {round(quantile_val, 4)}} below minimum {.val {min_threshold}}, using {.val {actual_thresh}} instead"
-                    )
-                }
-                if (verbose) {
-                    cli::cli_alert_info(
-                        "Scores over {.val {round(actual_thresh, 4)}} are considered `Positive`."
-                    )
-                }
-
-                # Use data.table's fast ifelse
-                data.table::fifelse(diff > actual_thresh, "Positive", "Other")
-            }
-        }
-    ]
-
-    # Additional validation: count actual positive cells
-    positive_count <- pred_dt[label == "Positive", .N]
-    total_count <- nrow(pred_dt)
-    actual_fraction <- round(positive_count / total_count, 4)
+  chk::chk_length(pheno_colnames, 2)
+  # Try to find the reference group in the column names
+  # If not found, use the second column as the reference group
+  ctrl_col <- grep(
+    "[Nn]on|[Nn]ormal|[Cc]ontrol|[Rr]ef|[Cc]trl|0",
+    pheno_colnames,
+    value = TRUE
+  )
+  if (length(ctrl_col) == 0) {
     if (verbose) {
-        cli::cli_alert_success(
-            "Labeled {.val {positive_count}} cells as Positive ({.val {actual_fraction * 100}}% of total)."
-        )
+      cli::cli_alert_info(
+        "Using {.val {pheno_colnames[2]}} as reference group"
+      )
     }
 
-    pred_dt
+    pred_dt[, "diff" := .SD[[pheno_colnames[1]]] - .SD[[pheno_colnames[2]]]]
+  } else {
+    if (verbose) {
+      cli::cli_alert_info(
+        "Using {.val {ctrl_col}} as reference group"
+      )
+    }
+
+    pred_dt[,
+      "diff" := .SD[[setdiff(pheno_colnames, ctrl_col)]] -
+        .SD[[ctrl_col]]
+    ]
+  }
+
+  # Calculate difference using data.table operations
+
+  # Perform normality test with purrr pattern matching
+  normality_test_pval <- switch(
+    test_method,
+    "jarque-bera" = jb.test.modified(pred_dt$diff)$p.value,
+    "d'agostino" = dagostino.test(pred_dt$diff)$p.value[3],
+    "kolmogorov-smirnov" = stats::ks.test(pred_dt$diff, "pnorm")$p.value
+  )
+
+  # Apply labeling based on normality test result
+  pred_dt[,
+    "label" := {
+      if (normality_test_pval < 0.05) {
+        # Use quantile-based selection for non-normal distributions
+        n_positive <- ceiling(.N * select_fraction)
+        sorted_indices <- order(diff, decreasing = TRUE)
+        positive_positions <- sorted_indices[seq_len(n_positive)]
+
+        # Calculate original threshold
+        original_thresh <- round(
+          diff[positive_positions[n_positive]],
+          4
+        )
+
+        # Apply minimum threshold constraint
+        if (original_thresh < min_threshold) {
+          # Filter positions to only include cells above min_threshold
+          above_min_thresh <- which(diff > min_threshold)
+
+          # Take intersection with top fraction positions
+          valid_positions <- intersect(
+            positive_positions,
+            above_min_thresh
+          )
+
+          # Update actual number of positive cells
+          actual_n_positive <- length(valid_positions)
+          actual_thresh <- min_threshold
+
+          if (verbose) {
+            cli::cli_alert_info(
+              "Original threshold {.val {original_thresh}} below minimum {.val {min_threshold}}, using {.val {actual_thresh}} instead"
+            )
+          }
+        } else {
+          valid_positions <- positive_positions
+          actual_thresh <- original_thresh
+          actual_n_positive <- n_positive
+        }
+
+        if (verbose) {
+          cli::cli_alert_info(
+            "Scores over {.val {actual_thresh}} are considered `Positive`."
+          )
+        }
+
+        # Create labels using vectorized operations
+        labels <- rep("Other", .N)
+        labels[valid_positions] <- "Positive"
+        labels
+      } else {
+        # Use normal distribution-based selection
+        mean_val <- SigBridgeRUtils::colMeans3(as.matrix(diff))
+        sd_val <- SigBridgeRUtils::colSds3(as.matrix(diff))
+        quantile_val <- stats::qnorm(
+          select_fraction,
+          mean = mean_val,
+          sd = sd_val,
+          lower.tail = FALSE
+        )
+
+        # Apply minimum threshold constraint
+        actual_thresh <- max(quantile_val, min_threshold)
+
+        if (quantile_val < min_threshold && verbose) {
+          cli::cli_alert_info(
+            "Original threshold {.val {round(quantile_val, 4)}} below minimum {.val {min_threshold}}, using {.val {actual_thresh}} instead"
+          )
+        }
+        if (verbose) {
+          cli::cli_alert_info(
+            "Scores over {.val {round(actual_thresh, 4)}} are considered `Positive`."
+          )
+        }
+
+        # Use data.table's fast ifelse
+        data.table::fifelse(diff > actual_thresh, "Positive", "Other")
+      }
+    }
+  ]
+
+  # Additional validation: count actual positive cells
+  positive_count <- pred_dt[label == "Positive", .N]
+  total_count <- nrow(pred_dt)
+  actual_fraction <- round(positive_count / total_count, 4)
+  if (verbose) {
+    cli::cli_alert_success(
+      "Labeled {.val {positive_count}} cells as Positive ({.val {actual_fraction * 100}}% of total)."
+    )
+  }
+
+  pred_dt
 }
 
 #' @title Label Continuous Phenotype Cells Using MAD Testing
@@ -282,47 +282,47 @@ LabelBinaryCells <- function(
 #' @family DEGAS
 #'
 LabelContinuousCells <- function(
-    pred_dt,
-    verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE
+  pred_dt,
+  verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE
 ) {
-    if (verbose) {
-        ts_cli$cli_alert_info(
-            "Searching for various phenotype-associated cells "
-        )
-    }
-
-    # Use matrix operations for efficient MAD testing across predictions
-    label_cols <- setdiff(names(pred_dt), "cell_id")
-
-    mad_results <- purrr::map_dfr(
-        label_cols,
-        function(col) {
-            vals <- as.numeric(pred_dt[[col]])
-            mad_test <- mad.test(vals)
-            data.table::data.table(
-                column = col,
-                p_value = mad_test$p.value,
-                is_positive = mad_test$p.value < 0.05
-            )
-        }
+  if (verbose) {
+    ts_cli$cli_alert_info(
+      "Searching for various phenotype-associated cells "
     )
-    if (is.null(mad_results)) {
-        cli::cli_warn("Empty MAD test results returned.")
-        return(pred_dt)
-    }
+  }
 
-    # Apply labels based on MAD test results
-    positive_cols <- mad_results[`p_value` < 0.05, `column`]
-    if (length(positive_cols) > 0) {
-        pred_dt[,
-            "label" := ifelse(rowSums(.SD) > 0, "Positive", "Other"),
-            .SDcols = positive_cols
-        ]
-    } else {
-        pred_dt[, "label" := "Other"]
-    }
+  # Use matrix operations for efficient MAD testing across predictions
+  label_cols <- setdiff(names(pred_dt), "cell_id")
 
-    pred_dt
+  mad_results <- purrr::map_dfr(
+    label_cols,
+    function(col) {
+      vals <- as.numeric(pred_dt[[col]])
+      mad_test <- mad.test(vals)
+      data.table::data.table(
+        column = col,
+        p_value = mad_test$p.value,
+        is_positive = mad_test$p.value < 0.05
+      )
+    }
+  )
+  if (is.null(mad_results)) {
+    cli::cli_warn("Empty MAD test results returned.")
+    return(pred_dt)
+  }
+
+  # Apply labels based on MAD test results
+  positive_cols <- mad_results[`p_value` < 0.05, `column`]
+  if (length(positive_cols) > 0) {
+    pred_dt[,
+      "label" := ifelse(rowSums(.SD) > 0, "Positive", "Other"),
+      .SDcols = positive_cols
+    ]
+  } else {
+    pred_dt[, "label" := "Other"]
+  }
+
+  pred_dt
 }
 
 #' @title Label Survival-Associated Phenotype Cells Based on Hazard Scores
@@ -404,105 +404,105 @@ LabelContinuousCells <- function(
 #' @family DEGAS
 #'
 LabelSurvivalCells <- function(
-    pred_dt,
-    select_fraction,
-    test_method,
-    min_threshold = 0.7, # Added minimum threshold parameter
-    verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE
+  pred_dt,
+  select_fraction,
+  test_method,
+  min_threshold = 0.7, # Added minimum threshold parameter
+  verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE
 ) {
-    if (verbose) {
-        ts_cli$cli_alert_info("Searching for survival-associated cells ")
-    }
+  if (verbose) {
+    ts_cli$cli_alert_info("Searching for survival-associated cells ")
+  }
 
-    pred_vec <- pred_dt[["Hazard"]]
-    normality_test_pval <- switch(
-        test_method,
-        "jarque-bera" = jb.test.modified(pred_vec)$p.value,
-        "d'agostino" = dagostino.test(pred_vec)$p.value[3],
-        "kolmogorov-smirnov" = stats::ks.test(pred_vec, "pnorm")$p.value
-    )
+  pred_vec <- pred_dt[["Hazard"]]
+  normality_test_pval <- switch(
+    test_method,
+    "jarque-bera" = jb.test.modified(pred_vec)$p.value,
+    "d'agostino" = dagostino.test(pred_vec)$p.value[3],
+    "kolmogorov-smirnov" = stats::ks.test(pred_vec, "pnorm")$p.value
+  )
 
-    pred_dt[,
-        "label" := {
-            if (normality_test_pval < 0.05) {
-                # Use quantile-based selection for non-normal distributions
-                n_positive <- ceiling(.N * select_fraction)
-                sorted_indices <- order(`Hazard`, decreasing = TRUE)
-                positive_positions <- sorted_indices[seq_len(n_positive)]
+  pred_dt[,
+    "label" := {
+      if (normality_test_pval < 0.05) {
+        # Use quantile-based selection for non-normal distributions
+        n_positive <- ceiling(.N * select_fraction)
+        sorted_indices <- order(`Hazard`, decreasing = TRUE)
+        positive_positions <- sorted_indices[seq_len(n_positive)]
 
-                # Calculate original threshold
-                original_thresh <- round(
-                    `Hazard`[positive_positions[n_positive]],
-                    4
-                )
+        # Calculate original threshold
+        original_thresh <- round(
+          `Hazard`[positive_positions[n_positive]],
+          4
+        )
 
-                # Apply minimum threshold constraint
-                if (original_thresh < min_threshold) {
-                    # Filter positions to only include cells above min_threshold
-                    above_min_thresh <- which(`Hazard` > min_threshold)
+        # Apply minimum threshold constraint
+        if (original_thresh < min_threshold) {
+          # Filter positions to only include cells above min_threshold
+          above_min_thresh <- which(`Hazard` > min_threshold)
 
-                    # Take intersection with top fraction positions
-                    valid_positions <- intersect(
-                        positive_positions,
-                        above_min_thresh
-                    )
+          # Take intersection with top fraction positions
+          valid_positions <- intersect(
+            positive_positions,
+            above_min_thresh
+          )
 
-                    # * Update actual number of positive cells
-                    # actual_n_positive <- length(valid_positions)
-                    actual_thresh <- min_threshold
+          # * Update actual number of positive cells
+          # actual_n_positive <- length(valid_positions)
+          actual_thresh <- min_threshold
 
-                    if (verbose) {
-                        cli::cli_alert_info(
-                            "Original threshold {.val {original_thresh}} below minimum {.val {min_threshold}}, using {.val {actual_thresh}} instead"
-                        )
-                    }
-                } else {
-                    valid_positions <- positive_positions
-                    actual_thresh <- original_thresh
-                    # actual_n_positive <- n_positive
-                }
-
-                if (verbose) {
-                    cli::cli_alert_info(
-                        "Scores over {.val {actual_thresh}} are considered `Positive`."
-                    )
-                }
-
-                # Create labels using vectorized operations
-                labels <- rep("Other", .N)
-                labels[positive_positions] <- "Positive"
-                labels
-            } else {
-                # Use normal distribution-based selection
-                mean_val <- colMeans(`Hazard`)
-                sd_val <- SigBridgeRUtils::colSds3(`Hazard`)
-                quantile_val <- stats::qnorm(
-                    select_fraction,
-                    mean = mean_val,
-                    sd = sd_val,
-                    lower.tail = FALSE
-                )
-                # Apply minimum threshold constraint
-                actual_thresh <- max(quantile_val, min_threshold)
-
-                if (quantile_val < min_threshold && verbose) {
-                    cli::cli_alert_info(
-                        "Original threshold {.val {round(quantile_val, 4)}} below minimum {.val {min_threshold}}, using {.val {actual_thresh}} instead"
-                    )
-                }
-
-                if (verbose) {
-                    cli::cli_alert_info(
-                        "Scores over {.val {round(actual_thresh, 4)}} are considered `Positive`."
-                    )
-                }
-
-                data.table::fifelse(
-                    `Hazard` > actual_thresh,
-                    "Positive",
-                    "Other"
-                )
-            }
+          if (verbose) {
+            cli::cli_alert_info(
+              "Original threshold {.val {original_thresh}} below minimum {.val {min_threshold}}, using {.val {actual_thresh}} instead"
+            )
+          }
+        } else {
+          valid_positions <- positive_positions
+          actual_thresh <- original_thresh
+          # actual_n_positive <- n_positive
         }
-    ]
+
+        if (verbose) {
+          cli::cli_alert_info(
+            "Scores over {.val {actual_thresh}} are considered `Positive`."
+          )
+        }
+
+        # Create labels using vectorized operations
+        labels <- rep("Other", .N)
+        labels[positive_positions] <- "Positive"
+        labels
+      } else {
+        # Use normal distribution-based selection
+        mean_val <- colMeans(`Hazard`)
+        sd_val <- SigBridgeRUtils::colSds3(`Hazard`)
+        quantile_val <- stats::qnorm(
+          select_fraction,
+          mean = mean_val,
+          sd = sd_val,
+          lower.tail = FALSE
+        )
+        # Apply minimum threshold constraint
+        actual_thresh <- max(quantile_val, min_threshold)
+
+        if (quantile_val < min_threshold && verbose) {
+          cli::cli_alert_info(
+            "Original threshold {.val {round(quantile_val, 4)}} below minimum {.val {min_threshold}}, using {.val {actual_thresh}} instead"
+          )
+        }
+
+        if (verbose) {
+          cli::cli_alert_info(
+            "Scores over {.val {round(actual_thresh, 4)}} are considered `Positive`."
+          )
+        }
+
+        data.table::fifelse(
+          `Hazard` > actual_thresh,
+          "Positive",
+          "Other"
+        )
+      }
+    }
+  ]
 }
