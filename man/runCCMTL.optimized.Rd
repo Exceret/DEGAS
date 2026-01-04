@@ -5,20 +5,32 @@
 \title{Optimized Cross-Condition Multi-Task Learning Model Training}
 \usage{
 runCCMTL.optimized(
-  scExp,
-  scLab,
-  patExp,
-  patLab,
-  tmpDir,
-  model_type,
-  architecture,
-  FFdepth,
-  DEGAS.seed,
-  force_rewrite = FALSE,
-  verbose = SigBridgeRUtils::getFuncOption("verbose") \%||\% TRUE
+  verbose = SigBridgeRUtils::getFuncOption("verbose") \%||\% TRUE,
+  scExp = matrix(),
+  scLab = matrix(),
+  patExp = matrix(),
+  patLab = matrix(),
+  DEGAS.model_type = c("ClassClass", "ClassCox", "ClassBlank", "BlankClass", "BlankCox"),
+  DEGAS.architecture = c("DenseNet", "Standard"),
+  DEGAS.ff_depth = 3L,
+  DEGAS.bag_depth = 5L,
+  DEGAS.pyloc = ListPyEnv()$python[1],
+  DEGAS.toolsPath = file.path(.libPaths()[1], "DEGAS/DEGAS_tools/"),
+  DEGAS.train_steps = 2000L,
+  DEGAS.scbatch_sz = 200L,
+  DEGAS.patbatch_sz = 50L,
+  DEGAS.hidden_feats = 50L,
+  DEGAS.do_prc = 0.5,
+  DEGAS.lambda1 = 3,
+  DEGAS.lambda2 = 3,
+  DEGAS.lambda3 = 3,
+  DEGAS.seed = 123L,
+  ...
 )
 }
 \arguments{
+\item{verbose}{Logical, whether to print output messages.}
+
 \item{scExp}{A matrix or data frame containing single-cell expression data
 for model training.}
 
@@ -30,6 +42,9 @@ for multi-task learning.}
 
 \item{patLab}{A matrix containing patient-level labels corresponding
 to the patient expression data.}
+
+\item{DEGAS.seed}{Integer specifying the random seed for reproducible
+model training.}
 
 \item{tmpDir}{Character string specifying the temporary directory path for
 storing intermediate files and model outputs.}
@@ -43,13 +58,8 @@ One of: "DenseNet", "Standard".}
 \item{FFdepth}{Integer specifying the number of layers in the feed-forward
 network architecture.}
 
-\item{DEGAS.seed}{Integer specifying the random seed for reproducible
-model training.}
-
 \item{force_rewrite}{Logical indicating whether to force rewriting of input
 files even if they already exist. Default: FALSE.}
-
-\item{verbose}{Logical, whether to print output messages.}
 }
 \value{
 Returns a trained CCMTL model object that can be used for predictions and

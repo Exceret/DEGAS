@@ -57,97 +57,101 @@
 #' @references Johnson TS, Yu CY, Huang Z, Xu S, Wang T, Dong C, et al. Diagnostic Evidence GAuge of Single cells (DEGAS): a flexible deep transfer learning framework for prioritizing cells in relation to disease. Genome Med. 2022 Feb 1;14(1):11.
 #'
 runCCMTL.optimized <- function(
-  scExp,
-  scLab,
-  patExp,
-  patLab,
-  tmpDir,
-  model_type,
-  architecture,
-  FFdepth,
-  DEGAS.seed,
-  force_rewrite = FALSE,
-  verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE
+  verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE,
+  scExp = matrix(), # sc data matrix
+  scLab = matrix(),
+  patExp = matrix(),
+  patLab = matrix(),
+  #   tmpDir,
+  DEGAS.model_type = c(
+    'ClassClass',
+    'ClassCox',
+    'ClassBlank',
+    'BlankClass',
+    'BlankCox'
+  ),
+  DEGAS.architecture = c("DenseNet", "Standard"),
+  DEGAS.ff_depth = 3L,
+  DEGAS.bag_depth = 5L,
+  DEGAS.pyloc = ListPyEnv()$python[1],
+  DEGAS.toolsPath = file.path(.libPaths()[1], "DEGAS/DEGAS_tools/"),
+  DEGAS.train_steps = 2000L,
+  DEGAS.scbatch_sz = 200L,
+  DEGAS.patbatch_sz = 50L,
+  DEGAS.hidden_feats = 50L,
+  DEGAS.do_prc = 0.5,
+  DEGAS.lambda1 = 3.0,
+  DEGAS.lambda2 = 3.0,
+  DEGAS.lambda3 = 3.0,
+  DEGAS.seed = 123L,
+  ... # path.data, path.result, assay etc
 ) {
-  # Only write files if explicitly requested
-  if (force_rewrite) {
-    if (dir.exists(tmpDir)) {
-      unlink(tmpDir, recursive = TRUE, force = TRUE)
-    }
-    dir.create(tmpDir, recursive = TRUE, showWarnings = FALSE)
-    # Write input files
-    writeInputFiles.optimized(
-      scExp = scExp,
-      scLab = scLab,
-      patExp = patExp,
-      patLab = patLab,
-      tmpDir = tmpDir
-    )
-  }
-
   # create python files
-  if (!architecture %chin% c("DenseNet", "Standard")) {
-    cli::cli_abort(c("x" = 'Incorrect architecture argument'))
-  } else if (architecture == "DenseNet") {
-    makeExec2(
-      tmpDir = tmpDir,
-      FFdepth = FFdepth,
-      model_type = model_type
-    )
+  if (!DEGAS.architecture %chin% c("DenseNet", "Standard")) {
+    cli::cli_abort(c(
+      "x" = 'Incorrect architecture argument',
+      ">" = "Available architectures: 'DenseNet', 'Standard'"
+    ))
   } else {
-    makeExec(
-      tmpDir = tmpDir,
-      FFdepth = FFdepth,
-      model_type = model_type
+    full_degas_script <- makeExec(
+      #   tmpDir = tmpDir,
+      FFdepth = DEGAS.ff_depth,
+      model_type = DEGAS.model_type,
+      DEGAS.toolsPath = DEGAS.toolsPath,
+      architecture = DEGAS.architecture,
+      # "Standard", # ! makeExec
+      # "DenseNet" # ! makeExec2
     )
   }
 
-  # cmd <- paste0(
-  #     DEGAS.pyloc,
-  #     " ",
-  #     tmpDir,
-  #     model_type,
-  #     "MTL.py",
-  #     paste(
-  #         "",
-  #         tmpDir,
-  #         DEGAS.train_steps,
-  #         DEGAS.scbatch_sz,
-  #         DEGAS.patbatch_sz,
-  #         DEGAS.hidden_feats,
-  #         DEGAS.do_prc,
-  #         DEGAS.lambda1,
-  #         DEGAS.lambda2,
-  #         DEGAS.lambda3,
-  #         DEGAS.seed
-  #     )
-  # )
-  cmd_args <- as.character(c(
-    paste0(tmpDir, model_type, "MTL.py"),
-    tmpDir,
-    DEGAS.train_steps,
-    DEGAS.scbatch_sz,
-    DEGAS.patbatch_sz,
-    DEGAS.hidden_feats,
-    DEGAS.do_prc,
-    DEGAS.lambda1,
-    DEGAS.lambda2,
-    DEGAS.lambda3,
-    DEGAS.seed
-  ))
+  # R matrix -> nparray
+  py$Xsc <- reticulate::r_to_py(scExp)
+  py$Ysc <- reticulate::r_to_py(scLab)
+  py$Xpat <- reticulate::r_to_py(patExp) # bulk
+  py$Ypat <- reticulate::r_to_py(patLab) # pheno
 
-  # * Execute system command
-  # system(command = cmd) # if processx::run failed, use `system` instead
-  result <- processx::run(
-    command = DEGAS.pyloc,
-    args = cmd_args,
-    echo = verbose,
-    error_on_status = TRUE
+  py$train_steps <- reticulate::r_to_py(DEGAS.train_steps)
+  py$scbatch_sz <- reticulate::r_to_py(DEGAS.scbatch_sz)
+  py$patbatch_sz <- reticulate::r_to_py(DEGAS.patbatch_sz)
+  py$hidden_feats <- reticulate::r_to_py(DEGAS.hidden_feats)
+  py$do_prc <- reticulate::r_to_py(DEGAS.do_prc)
+  py$lambda1 <- reticulate::r_to_py(DEGAS.lambda1)
+  py$lambda2 <- reticulate::r_to_py(DEGAS.lambda2)
+  py$lambda3 <- reticulate::r_to_py(DEGAS.lambda3)
+  py$seed <- reticulate::r_to_py(DEGAS.seed)
+
+  reticulate::py_run_string(full_degas_script)
+
+  # * extract result
+  activation <- rlang::list2(py$activation)
+
+  additional_layers <- ifelse(
+    DEGAS.model_type %in% c('ClassClass', 'ClassCox'),
+    3,
+    0
+  )
+  total_layers <- DEGAS.ff_depth + 1 + additional_layers
+  thetas <- rlang::list2(
+    !!!rlang::set_names(
+      lapply(seq_len(total_layers), function(j) py[[glue::glue("Theta{j}")]]),
+      glue::glue("theta{j}", j = seq_len(total_layers))
+    )
   )
 
-  readOutputFiles.optimized(
-    tmpDir = tmpDir,
-    model_type = model_type,
-    architecture = architecture
+  biases <- rlang::list2(
+    !!!rlang::set_names(
+      lapply(seq_len(total_layers), function(j) py[[glue::glue("Bias{j}")]]),
+      glue::glue("bias{j}", j = seq_len(total_layers))
+    )
+  )
+
+  methods::new(
+    'ccModel',
+    Bias = biases,
+    Theta = thetas,
+    Activation = activation,
+    Depth = length(activation),
+    Model_type = DEGAS.model_type,
+    Architecture = DEGAS.architecture
   )
 }

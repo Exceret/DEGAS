@@ -4,15 +4,21 @@
 \alias{makeExec}
 \title{Generate Python Executable for Neural Network}
 \usage{
-makeExec(tmpDir, FFdepth, model_type)
+makeExec(
+  FFdepth,
+  model_type = c("ClassClass", "ClassCox", "ClassBlank", "BlankClass", "BlankCox"),
+  DEGAS.toolsPath = system.file("DEGAS_tools", package = "DEGAS", mustWork = TRUE),
+  architecture = c("Standard", "DenseNet"),
+  ...
+)
 }
 \arguments{
-\item{tmpDir}{Temporary directory for script generation}
-
 \item{FFdepth}{Number of hidden layers in the feedforward network}
 
 \item{model_type}{Type of neural network model. Must be one of:
 'BlankClass', 'ClassBlank', 'BlankCox', 'ClassClass', or 'ClassCox'}
+
+\item{tmpDir}{Temporary directory for script generation}
 }
 \value{
 None. Generates Python scripts in the specified temporary directory.

@@ -5,9 +5,10 @@ Build Scripts for DEGAS Tools
 Combine the source files in the `dev/` directory with `mtl_utils.py` to generate the script for the production environment
 """
 
-import os
+# import os
 from pathlib import Path
-import re
+
+# import re
 from datetime import datetime
 
 
@@ -16,44 +17,44 @@ class ScriptBuilder:
     Construct the DEGAS tool script
     """
 
-    def __init__(self, dev_dir, output_dir):
-        self.dev_dir = Path(dev_dir)
-        self.output_dir = Path(output_dir)
-        self.utils_file = self.dev_dir / "mtl_utils.py"
+    def __init__(self, dev_dir, output_dir) -> None:
+        self.dev_dir: Path = Path(dev_dir)
+        self.output_dir: Path = Path(output_dir)
+        self.utils_file: Path = self.dev_dir / "mtl_utils.py"
 
         # read utils file
         with open(self.utils_file, "r", encoding="utf-8") as f:
-            utils_content = f.read()
+            utils_content: str = f.read()
 
         # clean utils docstring
-        self.utils_code = self._clean_utils_content(utils_content)
+        self.utils_code: str = self._clean_utils_content(utils_content)
 
-    def _clean_utils_content(self, content):
+    def _clean_utils_content(self, content) -> str:
         """
         Clean up the contents of the utils file by removing the top-level docstring
         while retaining the import statements
         """
 
-        lines = content.split("\n")
-        result_lines = []
-        in_docstring = False
-        docstring_removed = False
-        skip_empty = True  # Skip the initial blank lines.
+        lines: list = content.split("\n")
+        result_lines: list = []
+        in_docstring: bool = False
+        docstring_removed: bool = False
+        skip_empty: bool = True  # Skip the initial blank lines.
 
         for line in lines:
             if skip_empty:
                 if line.strip() == "":
                     continue
-                skip_empty = False
+                skip_empty: bool = False
 
             # skip the first docstring
             if not docstring_removed and '"""' in line:
                 if not in_docstring:
-                    in_docstring = True
+                    in_docstring: bool = True
                     continue
                 else:
-                    in_docstring = False
-                    docstring_removed = True
+                    in_docstring: bool = False
+                    docstring_removed: bool = True
                     continue
 
             if in_docstring and not docstring_removed:
@@ -67,21 +68,23 @@ class ScriptBuilder:
 
         return "\n".join(result_lines)
 
-    def _read_source_without_inline_marker(self, source_path):
+    def _read_source_without_inline_marker(self, source_path) -> str:
         """
         Read the source file and remove the line marked with `INLINE_UTILS_HERE`
-        
+
         NOTE: docstring is included in the result
         """
 
         with open(source_path, "r", encoding="utf-8") as f:
-            lines = f.readlines()
+            lines: list = f.readlines()
 
-        filtered_lines = [line for line in lines if "INLINE_UTILS_HERE" not in line]
+        filtered_lines: list = [
+            line for line in lines if "INLINE_UTILS_HERE" not in line
+        ]
 
         return "".join(filtered_lines)
-    
-    def build_script(self, source_file, output_name):
+
+    def build_script(self, source_file, output_name) -> bool:
         """
         Construct one script file
 
@@ -90,18 +93,18 @@ class ScriptBuilder:
             output_name: output filename (e.g. 'BlankClassMTL_p3.py')
         """
 
-        source_path = self.dev_dir / source_file
-        output_path = self.output_dir / output_name
+        source_path: Path = self.dev_dir / source_file
+        output_path: Path = self.output_dir / output_name
 
         if not source_path.exists():
             print(f"Warning: Source file not found: {source_path}")
             return False
 
         # Read the source file and remove the line marked with `INLINE_UTILS_HERE`
-        source_content = self._read_source_without_inline_marker(source_path)
+        source_content: str = self._read_source_without_inline_marker(source_path)
 
         # result
-        parts = []
+        parts: list = []
 
         # 1. Add an auto-generated docstring
         parts.append(self._generate_header(source_file))
@@ -123,7 +126,7 @@ class ScriptBuilder:
         # 3. Add the source code
         parts.append(source_content)
 
-        output_content = "\n".join(parts)
+        output_content:str = "\n".join(parts)
 
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(output_content)
@@ -131,28 +134,28 @@ class ScriptBuilder:
         print(f"✓ Built: {output_name}")
         return True
 
-    def _extract_docstring(self, filepath):
+    def _extract_docstring(self, filepath) -> None:
         """
         Retrieve the docstring from the source file (if any).
-        
-        This function is deprecated 
+
+        This function is deprecated
         """
 
         with open(filepath, "r", encoding="utf-8") as f:
-            lines = f.readlines()
+            lines: list = f.readlines()
 
-        docstring_lines = []
-        in_docstring = False
-        found_docstring = False
+        docstring_lines: list = []
+        in_docstring: bool = False
+        found_docstring: bool = False
 
         for line in lines:
             if '"""' in line and not found_docstring:
                 if not in_docstring:
-                    in_docstring = True
+                    in_docstring: bool = True
                     docstring_lines.append(line)
                 else:
                     docstring_lines.append(line)
-                    found_docstring = True
+                    found_docstring: bool = True
                     break
             elif in_docstring:
                 docstring_lines.append(line)
@@ -161,11 +164,11 @@ class ScriptBuilder:
             return "".join(docstring_lines)
         return None
 
-    def _generate_header(self, source_file):
+    def _generate_header(self, source_file) -> str:
         """
         Generate the file header comment
         """
-        
+
         return f"""
 # {'=' * 70}
 # Auto-generated from: {source_file}
@@ -177,7 +180,7 @@ class ScriptBuilder:
 
 """
 
-    def build_all(self):
+    def build_all(self) -> bool:
         """
         Construct all scripts
         """
@@ -193,7 +196,7 @@ class ScriptBuilder:
             ("BlankCoxMTL_p1_src.py", "BlankCoxMTL_p1.py"),
             ("BlankCoxMTL_p3_src.py", "BlankCoxMTL_p3.py"),
             ("ClassBlankMTL_p1_src.py", "ClassBlankMTL_p1.py"),
-            ("ClassBlankMTL_p3_src.py", "ClassBlankMTL_p3.py")
+            ("ClassBlankMTL_p3_src.py", "ClassBlankMTL_p3.py"),
         ]
 
         print("Building DEGAS Tools scripts...")
@@ -203,8 +206,8 @@ class ScriptBuilder:
         print(f"Utils file: {self.utils_file}")
         print("=" * 70)
 
-        success_count = 0
-        failed = []
+        success_count: int = 0
+        failed: list = []
 
         for source, output in scripts:
             if self.build_script(source, output):
@@ -223,23 +226,24 @@ class ScriptBuilder:
         return success_count == len(scripts)
 
 
-def main():
-    script_dir = Path(__file__).parent
-    dev_dir = script_dir
-    output_dir = script_dir.parent
+def main() -> None:
+    # Run in non-interactive mode
+    script_dir: Path = Path(__file__).parent
+    dev_dir: Path = script_dir
+    output_dir: Path = script_dir.parent
 
     print("\n" + "=" * 70)
     print("DEGAS Tools Build Script")
     print("=" * 70 + "\n")
 
-    utils_file = dev_dir / "mtl_utils.py"
+    utils_file: Path = dev_dir / "mtl_utils.py"
     if not utils_file.exists():
         print(f"ERROR: mtl_utils.py not found at {utils_file}")
         return 1
 
-    builder = ScriptBuilder(dev_dir, output_dir)
-    
-    success = builder.build_all()
+    builder: ScriptBuilder = ScriptBuilder(dev_dir, output_dir)
+
+    success: bool = builder.build_all()
 
     print("\n" + "=" * 70)
     if success:

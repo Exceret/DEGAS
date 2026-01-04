@@ -17,16 +17,18 @@ Utils functions from `mtl_utils.py` will be automatically inlined
 # Set random seed
 # ***********************************************************************
 
-if sys.argv[10] != "NULL":
-    np.random.seed(int(sys.argv[10]))
-    tf.compat.v1.set_random_seed(int(sys.argv[10]))
+seed: int = globals().get("seed", None)
+if seed is not None and np.isscalar(seed) and not isinstance(seed, (bool, str)):
+    seed_int = int(seed)
+    np.random.seed(seed_int)
+    tf.compat.v1.set_random_seed(seed_int)
 
 
 # ***********************************************************************
 # Data loading
 # ***********************************************************************
 
-data_folder = sys.argv[1]
+# data_folder = sys.argv[1]
 
 # Load single-cell expression data and labels
 Xsc = np.loadtxt(data_folder + "scExp.csv", delimiter=",", skiprows=1)
@@ -49,14 +51,14 @@ np.random.shuffle(idx_pat)
 # Hyperparameters
 # ***********************************************************************
 
-train_steps = int(sys.argv[2])
-scbatch_sz = int(sys.argv[3])
-patbatch_sz = int(sys.argv[4])
-hidden_feats = int(sys.argv[5])
-do_prc = float(sys.argv[6])
-lambda1 = float(sys.argv[7])
-lambda2 = float(sys.argv[8])
-lambda3 = float(sys.argv[9])
+# train_steps = int(sys.argv[2])
+# scbatch_sz = int(sys.argv[3])
+# patbatch_sz = int(sys.argv[4])
+# hidden_feats = int(sys.argv[5])
+# do_prc = float(sys.argv[6])
+# lambda1 = float(sys.argv[7])
+# lambda2 = float(sys.argv[8])
+# lambda3 = float(sys.argv[9])
 
 
 # ***********************************************************************
