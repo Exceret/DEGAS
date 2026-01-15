@@ -1,3 +1,5 @@
 some_private_notes/
 Data/
 .Rproj.user
+test/**
+tests/testthat/test-DEGAS.R

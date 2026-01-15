@@ -64,11 +64,11 @@ runCCMTL.optimized <- function(
   patLab = matrix(),
   #   tmpDir,
   DEGAS.model_type = c(
-    'ClassClass',
-    'ClassCox',
-    'ClassBlank',
-    'BlankClass',
-    'BlankCox'
+    "ClassClass",
+    "ClassCox",
+    "ClassBlank",
+    "BlankClass",
+    "BlankCox"
   ),
   DEGAS.architecture = c("DenseNet", "Standard"),
   DEGAS.ff_depth = 3L,
@@ -89,7 +89,7 @@ runCCMTL.optimized <- function(
   # create python files
   if (!DEGAS.architecture %chin% c("DenseNet", "Standard")) {
     cli::cli_abort(c(
-      "x" = 'Incorrect architecture argument',
+      "x" = "Incorrect architecture argument",
       ">" = "Available architectures: 'DenseNet', 'Standard'"
     ))
   } else {
@@ -126,7 +126,7 @@ runCCMTL.optimized <- function(
   activation <- rlang::list2(py$activation)
 
   additional_layers <- ifelse(
-    DEGAS.model_type %in% c('ClassClass', 'ClassCox'),
+    DEGAS.model_type %in% c("ClassClass", "ClassCox"),
     3,
     0
   )
@@ -146,7 +146,7 @@ runCCMTL.optimized <- function(
   )
 
   methods::new(
-    'ccModel',
+    "ccModel",
     Bias = biases,
     Theta = thetas,
     Activation = activation,
