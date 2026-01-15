@@ -21,7 +21,6 @@ if sys.argv[10] != "NULL":
     np.random.seed(int(sys.argv[10]))
     tf.compat.v1.set_random_seed(int(sys.argv[10]))
 
-
 # ***********************************************************************
 # Data load
 # ***********************************************************************
@@ -48,7 +47,6 @@ np.random.shuffle(idx_pat)
 survtime = Ypat[:, 0]
 censor = Ypat[:, 1]
 
-
 # ***********************************************************************
 # Hyperparameters
 # ***********************************************************************
@@ -62,7 +60,6 @@ lambda1 = float(sys.argv[7])
 lambda2 = float(sys.argv[8])
 lambda3 = float(sys.argv[9])
 
-
 # ***********************************************************************
 # Network placeholders
 # ***********************************************************************
@@ -70,7 +67,7 @@ lambda3 = float(sys.argv[9])
 kprob = tf.placeholder(tf.float32)
 xs = tf.placeholder(tf.float32, [None, Fsc])
 r_pat = tf.placeholder(tf.float32, [None, None])  # Risk set matrix
-c_pat = tf.placeholder(tf.float32, [None])        # Censoring indicator variable
+c_pat = tf.placeholder(tf.float32, [None])  # Censoring indicator variable
 ps = tf.placeholder(tf.float32, [None, Lpat])
 lsc = tf.placeholder(tf.int32, shape=())
 lpat = tf.placeholder(tf.int32, shape=())

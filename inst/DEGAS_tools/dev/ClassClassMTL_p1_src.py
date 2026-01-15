@@ -21,7 +21,6 @@ if sys.argv[10] != "NULL":
     np.random.seed(int(sys.argv[10]))
     tf.compat.v1.set_random_seed(int(sys.argv[10]))
 
-
 # ***********************************************************************
 # Data loading
 # ***********************************************************************
@@ -46,7 +45,6 @@ Lpat = Ypat.shape[1]
 idx_pat = np.arange(Npat)
 np.random.shuffle(idx_pat)
 
-
 # ***********************************************************************
 # Hyperparameters
 # ***********************************************************************
@@ -59,7 +57,6 @@ do_prc = float(sys.argv[6])
 lambda1 = float(sys.argv[7])
 lambda2 = float(sys.argv[8])
 lambda3 = float(sys.argv[9])
-
 
 # ***********************************************************************
 # Build network - Define placeholders
@@ -75,4 +72,3 @@ lsc = tf.placeholder(tf.int32, shape=())
 lpat = tf.placeholder(tf.int32, shape=())
 
 # ***********************************************************************
-
