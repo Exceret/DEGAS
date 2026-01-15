@@ -101,7 +101,8 @@ class ScriptBuilder:
             return False
 
         # Read the source file and remove the line marked with `INLINE_UTILS_HERE`
-        source_content: str = self._read_source_without_inline_marker(source_path)
+        source_content: str = self._read_source_without_inline_marker(
+            source_path)
 
         # result
         parts: list = []
@@ -126,7 +127,7 @@ class ScriptBuilder:
         # 3. Add the source code
         parts.append(source_content)
 
-        output_content:str = "\n".join(parts)
+        output_content: str = "\n".join(parts)
 
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(output_content)
@@ -185,7 +186,7 @@ class ScriptBuilder:
         Construct all scripts
         """
 
-        scripts = [
+        scripts: list[tuple[str, str]] = [
             # (srouce filename, output filename)
             ("ClassClassMTL_p1_src.py", "ClassClassMTL_p1.py"),
             ("ClassClassMTL_p3_src.py", "ClassClassMTL_p3.py"),
@@ -216,7 +217,9 @@ class ScriptBuilder:
                 failed.append(source)
 
         print("=" * 70)
-        print(f"Build complete: {success_count}/{len(scripts)} scripts generated")
+        print(
+            f"Build complete: {success_count}/{len(scripts)} scripts generated"
+        )
 
         if failed:
             print("\nFailed to build:")

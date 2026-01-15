@@ -18,11 +18,11 @@ Utils functions from `mtl_utils.py` will be automatically inlined
 # ***********************************************************************
 
 seed: int = globals().get("seed", None)
-if seed is not None and np.isscalar(seed) and not isinstance(seed, (bool, str)):
+if seed is not None and np.isscalar(seed) and not isinstance(
+        seed, (bool, str)):
     seed_int = int(seed)
     np.random.seed(seed_int)
     tf.compat.v1.set_random_seed(seed_int)
-
 
 # ***********************************************************************
 # Data loading
@@ -52,7 +52,6 @@ np.random.shuffle(idx_pat)
 survtime = Ypat[:, 0]
 censor = Ypat[:, 1]
 
-
 # ***********************************************************************
 # Hyperparameters
 # ***********************************************************************
@@ -65,7 +64,6 @@ censor = Ypat[:, 1]
 # lambda1 = float(sys.argv[7])
 # lambda2 = float(sys.argv[8])
 # lambda3 = float(sys.argv[9])
-
 
 # ***********************************************************************
 # Build network - Define placeholders
@@ -82,5 +80,3 @@ lsc = tf.placeholder(tf.int32, shape=())
 lpat = tf.placeholder(tf.int32, shape=())
 
 # ***********************************************************************
-
-

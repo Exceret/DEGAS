@@ -50,7 +50,6 @@ predictae_sc2pat = add_layer(
     lambda1=lambda1,
 )
 
-
 # ***********************************************************************
 # Loss functions
 # ***********************************************************************
@@ -60,16 +59,14 @@ lossLabel1 = tf.reduce_mean(
     tf.reduce_sum(
         tf.square(ys_sc - tf.slice(predict_sc, [0, 0], [lsc, Lsc])),
         reduction_indices=[1],
-    )
-)
+    ))
 
 # Patient classification loss
 lossLabel2 = tf.reduce_mean(
     tf.reduce_sum(
         tf.square(ys_pat - tf.slice(predict_pat, [lsc, 0], [lpat, Lpat])),
         reduction_indices=[1],
-    )
-)
+    ))
 
 # MMD loss for domain adaptation
 lossMMD = mmd_loss(
@@ -82,37 +79,28 @@ lossConstSCtoPT = tf.reduce_mean(
     tf.reduce_sum(
         tf.square(tf.slice(predict_pat, [0, 0], [lsc, Lpat]) - (1.0 / Lpat)),
         reduction_indices=[1],
-    )
-)
+    ))
 
 # Constraint loss: Patient samples should have uniform SC predictions
 lossConstPTtoSC = tf.reduce_mean(
     tf.reduce_sum(
         tf.square(tf.slice(predict_sc, [lsc, 0], [lpat, Lsc]) - (1.0 / Lsc)),
         reduction_indices=[1],
-    )
-)
+    ))
 
 # Combined loss for main task
-loss = (
-    2 * lossLabel1
-    + lambda2 * lossLabel2
-    + lambda3 * lossMMD
-    + lossConstSCtoPT
-    + lossConstPTtoSC
-)
+loss = (2 * lossLabel1 + lambda2 * lossLabel2 + lambda3 * lossMMD +
+        lossConstSCtoPT + lossConstPTtoSC)
 
 # Autoencoder loss
 lossae_sc2pat = tf.reduce_mean(
-    tf.reduce_sum(tf.square(ps - predictae_sc2pat), reduction_indices=[1])
-)
+    tf.reduce_sum(tf.square(ps - predictae_sc2pat), reduction_indices=[1]))
 
 # Optimizers
-train_step1 = tf.train.AdamOptimizer(learning_rate=0.01, epsilon=1e-3).minimize(loss)
-train_step2 = tf.train.AdamOptimizer(learning_rate=0.01, epsilon=1e-3).minimize(
-    lossae_sc2pat
-)
-
+train_step1 = tf.train.AdamOptimizer(learning_rate=0.01,
+                                     epsilon=1e-3).minimize(loss)
+train_step2 = tf.train.AdamOptimizer(learning_rate=0.01,
+                                     epsilon=1e-3).minimize(lossae_sc2pat)
 
 # ***********************************************************************
 # Training batch preparation function
@@ -141,10 +129,9 @@ def prepare_training_batch():
     train_pat2 = train_pat[0:patbatch_sz]
 
     # Ensure each class has at least 2 samples (for stability)
-    while (
-        np.sum(np.sum(np.squeeze(Ypat[train_pat2, :]) > 0, axis=0) < 2) > 0
-        or np.sum(np.sum(np.squeeze(Ysc[train_sc2, :]) > 0, axis=0) < 2) > 0
-    ):
+    while (np.sum(np.sum(np.squeeze(Ypat[train_pat2, :]) > 0, axis=0) < 2) > 0
+           or np.sum(np.sum(np.squeeze(Ysc[train_sc2, :]) > 0, axis=0) < 2)
+           > 0):
         train_sc = resample(50, Ysc, idx_sc)
         train_pat = resample(50, Ypat, idx_pat)
         np.random.shuffle(train_pat)
@@ -191,7 +178,9 @@ tensor_train, train_pat2 = prepare_training_batch()
 
 # Initialize TensorFlow session
 init = tf.global_variables_initializer()
-sess = tf.Session()
+config.intra_op_parallelism_threads = 0  # 0 表示自动
+config.inter_op_parallelism_threads = 0
+sess = tf.Session(config=config)
 sess.run(init)
 
 print("Starting training...")
@@ -208,15 +197,24 @@ for i in range(train_steps + 1):
     sess.run(
         train_step2,
         feed_dict={
-            es: sess.run(
+            es:
+            sess.run(
                 predict_sc,
-                feed_dict={xs: np.squeeze(Xpat[train_pat2, :]), kprob: do_prc},
+                feed_dict={
+                    xs: np.squeeze(Xpat[train_pat2, :]),
+                    kprob: do_prc
+                },
             ),
-            ps: sess.run(
+            ps:
+            sess.run(
                 predict_pat,
-                feed_dict={xs: np.squeeze(Xpat[train_pat2, :]), kprob: do_prc},
+                feed_dict={
+                    xs: np.squeeze(Xpat[train_pat2, :]),
+                    kprob: do_prc
+                },
             ),
-            kprob: do_prc,
+            kprob:
+            do_prc,
         },
     )
 
@@ -232,15 +230,24 @@ for i in range(train_steps + 1):
         lossae_val = sess.run(
             lossae_sc2pat,
             feed_dict={
-                es: sess.run(
+                es:
+                sess.run(
                     predict_sc,
-                    feed_dict={xs: np.squeeze(Xpat[train_pat2, :]), kprob: do_prc},
+                    feed_dict={
+                        xs: np.squeeze(Xpat[train_pat2, :]),
+                        kprob: do_prc
+                    },
                 ),
-                ps: sess.run(
+                ps:
+                sess.run(
                     predict_pat,
-                    feed_dict={xs: np.squeeze(Xpat[train_pat2, :]), kprob: do_prc},
+                    feed_dict={
+                        xs: np.squeeze(Xpat[train_pat2, :]),
+                        kprob: do_prc
+                    },
                 ),
-                kprob: do_prc,
+                kprob:
+                do_prc,
             },
         )
 
@@ -252,5 +259,3 @@ for i in range(train_steps + 1):
         # Prepare next batch (except for last iteration)
         if i < train_steps:
             tensor_train, train_pat2 = prepare_training_batch()
-
-

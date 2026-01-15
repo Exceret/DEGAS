@@ -17,10 +17,11 @@ import os
 import sys
 from os.path import join
 
-
+tf.config.optimizer.set_jit(True)
 # ***********************************************************************
 # TensorFlow functions
 # ***********************************************************************
+
 
 def compute_pairwise_distances(x, y):
     """
@@ -30,8 +31,10 @@ def compute_pairwise_distances(x, y):
         raise ValueError("Both inputs should be matrices.")
     if x.get_shape().as_list()[1] != y.get_shape().as_list()[1]:
         raise ValueError("The number of features should be the same.")
+
     def norm(x):
         return tf.reduce_sum(tf.square(x), 1)
+
     return tf.transpose(norm(tf.expand_dims(x, 2) - tf.transpose(y)))
 
 
@@ -52,14 +55,20 @@ def get_weight(shape, lambda1):
     """
     var = tf.Variable(tf.random_normal(shape), dtype=tf.float32)
     if tf.__version__[0] == "1":
-        tf.add_to_collection("losses", tf.contrib.layers.l2_regularizer(lambda1)(var))
+        tf.add_to_collection("losses",
+                             tf.contrib.layers.l2_regularizer(lambda1)(var))
     else:
         tf.add_to_collection("losses", tf.keras.regularizers.L2(lambda1)(var))
     return var
 
 
-def add_layer(input, in_size, out_size, activation_function=None,
-              dropout_function=False, lambda1=0, keep_prob1=1):
+def add_layer(input,
+              in_size,
+              out_size,
+              activation_function=None,
+              dropout_function=False,
+              lambda1=0,
+              keep_prob1=1):
     """
     Add a neural network layer
     """
@@ -68,7 +77,8 @@ def add_layer(input, in_size, out_size, activation_function=None,
     Wx_plus_b = tf.matmul(input, Weights) + biases
     if dropout_function:
         Wx_plus_b = tf.nn.dropout(Wx_plus_b, keep_prob=keep_prob1)
-    outputs = activation_function(Wx_plus_b) if activation_function else Wx_plus_b
+    outputs = activation_function(
+        Wx_plus_b) if activation_function else Wx_plus_b
     return outputs
 
 
@@ -114,10 +124,15 @@ def mmd_loss(source_samples, target_samples, scope=None):
     Returns:
         a scalar tensor representing the MMD loss value.
     """
-    sigmas = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 5, 10, 15, 20,
-              25, 30, 35, 100, 1e3, 1e4, 1e5, 1e6]
-    gaussian_kernel = partial(gaussian_kernel_matrix, sigmas=tf.constant(sigmas))
-    loss_value = maximum_mean_discrepancy(source_samples, target_samples, kernel=gaussian_kernel)
+    sigmas = [
+        1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 5, 10, 15, 20, 25, 30, 35, 100,
+        1e3, 1e4, 1e5, 1e6
+    ]
+    gaussian_kernel = partial(gaussian_kernel_matrix,
+                              sigmas=tf.constant(sigmas))
+    loss_value = maximum_mean_discrepancy(source_samples,
+                                          target_samples,
+                                          kernel=gaussian_kernel)
     loss_value = tf.maximum(1e-4, loss_value)
     assert_op = tf.Assert(tf.is_finite(loss_value), [loss_value])
     with tf.control_dependencies([assert_op]):
@@ -173,6 +188,7 @@ def pairwise_dist_loss(A, labels):
 # ***********************************************************************
 # NumPy/Data Process
 # ***********************************************************************
+
 
 def Rmatrix(surv):
     """
@@ -268,7 +284,9 @@ def resample(prc_cut, Y, train):
             pass
         else:
             idx = np.squeeze(np.where(Y[train, i] >= 1))
-            choice = np.random.choice(train[idx], int(colsums[i] - cutoff), replace=False)
+            choice = np.random.choice(train[idx],
+                                      int(colsums[i] - cutoff),
+                                      replace=False)
             rem = rem + choice.tolist()
     return list(set(train) - set(rem)) + add
     # return np.concatenate((list([val for val in train if val not in rem]),add));	 # slower for smaller datasets
@@ -286,9 +304,13 @@ def resample_mixGamma(X, Y, train, nsamp, depth):
     for i in range(len(colsums)):
         idx = idx + [np.squeeze(np.where(Y[train, i] >= 1)).tolist()]
         if samp_per_class > colsums[i]:
-            choice = np.random.choice(train[idx[i]], int(samp_per_class), replace=True)
+            choice = np.random.choice(train[idx[i]],
+                                      int(samp_per_class),
+                                      replace=True)
         else:
-            choice = np.random.choice(train[idx[i]], int(samp_per_class), replace=False)
+            choice = np.random.choice(train[idx[i]],
+                                      int(samp_per_class),
+                                      replace=False)
         add = add + choice.tolist()
     tmpX = np.zeros([nsamp, X.shape[1]])
     tmpY = np.zeros([nsamp, Y.shape[1]])
@@ -299,9 +321,11 @@ def resample_mixGamma(X, Y, train, nsamp, depth):
         tmpIdx = list()
         for j in range(len(colsums)):
             if int(intBinom[j]) > colsums[j]:
-                tmpIdx = tmpIdx + np.random.choice(train[idx[j]], int(intBinom[j]), replace=True).tolist()
+                tmpIdx = tmpIdx + np.random.choice(
+                    train[idx[j]], int(intBinom[j]), replace=True).tolist()
             else:
-                tmpIdx = tmpIdx + np.random.choice(train[idx[j]], int(intBinom[j]), replace=False).tolist()
+                tmpIdx = tmpIdx + np.random.choice(
+                    train[idx[j]], int(intBinom[j]), replace=False).tolist()
         tmpX[i, :] = np.mean(X[tmpIdx, :], axis=0) + 1e-3
         tmpY[i, :] = intBinom / sum(intBinom)
 
@@ -309,11 +333,13 @@ def resample_mixGamma(X, Y, train, nsamp, depth):
     # tmpX = np.transpose(scaler.fit_transform(np.transpose(zscore(tmpX,axis=0))))     # CHANGED 20201212
     # return(tmpX,tmpY)		#CHANGED 20201211
 
-    return (np.concatenate((X[add, :], tmpX), axis=0), np.concatenate((Y[add, :], tmpY)))
+    return (np.concatenate((X[add, :], tmpX),
+                           axis=0), np.concatenate((Y[add, :], tmpY)))
     # return (
     #     np.concatenate((X[add[1 : np.round(nsamp / 2)], :], tmpX), axis=0),
     #     np.concatenate((Y[add[1 : np.round(nsamp / 2)], :], tmpY)),
     # )  # CHANGED 20201211
+
 
 def intersect(lst1, lst2):
     """

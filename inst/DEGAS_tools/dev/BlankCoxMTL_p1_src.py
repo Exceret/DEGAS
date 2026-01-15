@@ -18,11 +18,11 @@ Utils functions from mtl_utils.py will be automatically inlined
 # ***********************************************************************
 
 seed: int = globals().get("seed", None)
-if seed is not None and np.isscalar(seed) and not isinstance(seed, (bool, str)):
+if seed is not None and np.isscalar(seed) and not isinstance(
+        seed, (bool, str)):
     seed_int = int(seed)
     np.random.seed(seed_int)
     tf.compat.v1.set_random_seed(seed_int)
-
 
 # ***********************************************************************
 # Data load
@@ -50,7 +50,6 @@ np.random.shuffle(idx_pat)
 survtime = Ypat[:, 0]
 censor = Ypat[:, 1]
 
-
 # ***********************************************************************
 # Hyperparameters
 # ***********************************************************************
@@ -64,7 +63,6 @@ censor = Ypat[:, 1]
 # lambda2 = float(sys.argv[8])
 # lambda3 = float(sys.argv[9])
 
-
 # ***********************************************************************
 # Network placeholders
 # ***********************************************************************
@@ -72,7 +70,7 @@ censor = Ypat[:, 1]
 kprob = tf.placeholder(tf.float32)
 xs = tf.placeholder(tf.float32, [None, Fsc])
 r_pat = tf.placeholder(tf.float32, [None, None])  # Risk set matrix
-c_pat = tf.placeholder(tf.float32, [None])        # Censoring indicator variable
+c_pat = tf.placeholder(tf.float32, [None])  # Censoring indicator variable
 ps = tf.placeholder(tf.float32, [None, Lpat])
 lsc = tf.placeholder(tf.int32, shape=())
 lpat = tf.placeholder(tf.int32, shape=())
