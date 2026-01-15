@@ -10,7 +10,7 @@ LabelBinaryCells(
   select_fraction,
   test_method,
   min_threshold = 0.7,
-  verbose = SigBridgeRUtils::getFuncOption("verbose")
+  verbose = SigBridgeRUtils::getFuncOption("verbose") \%||\% TRUE
 )
 }
 \arguments{

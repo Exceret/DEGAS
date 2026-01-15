@@ -15,7 +15,7 @@ runCCMTLBag.optimized(
   FFdepth,
   Bagdepth,
   DEGAS.seed,
-  verbose = SigBridgeRUtils::getFuncOption("verbose")
+  verbose = SigBridgeRUtils::getFuncOption("verbose") \%||\% TRUE
 )
 }
 \arguments{

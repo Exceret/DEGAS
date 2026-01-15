@@ -92,7 +92,7 @@ runCCMTLBag.optimized <- function(
     FFdepth,
     Bagdepth,
     DEGAS.seed,
-    verbose = SigBridgeRUtils::getFuncOption("verbose")
+    verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE
 ) {
     if (verbose) {
         ts_cli$cli_alert_info(

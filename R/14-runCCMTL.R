@@ -67,7 +67,7 @@ runCCMTL.optimized <- function(
     FFdepth,
     DEGAS.seed,
     force_rewrite = FALSE,
-    verbose = SigBridgeRUtils::getFuncOption("verbose")
+    verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE
 ) {
     # Only write files if explicitly requested
     if (force_rewrite) {
