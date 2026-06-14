@@ -12,6 +12,7 @@ Utils functions from `mtl_utils.py` will be automatically inlined
 """
 
 # INLINE_UTILS_HERE
+r_session_params: dict = globals()
 
 # ***********************************************************************
 # Set random seed
@@ -28,7 +29,12 @@ if seed is not None and np.isscalar(seed) and not isinstance(
 # Data loading
 # ***********************************************************************
 
-data_folder = sys.argv[1]
+# data_folder = sys.argv[1]
+Xsc = r_session_params.get("Xsc", None)
+Ysc = r_session_params.get("Ysc", None)
+Ypat = r_session_params.get("Ypat", None)
+Xpat = r_session_params.get("Xpat", None)
+
 
 # Load single-cell expression data and labels
 # Xsc = np.loadtxt(data_folder + "scExp.csv", delimiter=",", skiprows=1)

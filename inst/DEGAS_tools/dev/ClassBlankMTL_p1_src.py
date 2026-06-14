@@ -12,14 +12,14 @@ Utils functions from `mtl_utils.py` will be automatically inlined
 """
 
 # INLINE_UTILS_HERE
+r_session_params: dict = globals()
 
 # ***********************************************************************
 # Set random seed
 # ***********************************************************************
 
 seed: int = globals().get("seed", None)
-if seed is not None and np.isscalar(seed) and not isinstance(
-        seed, (bool, str)):
+if seed is not None and np.isscalar(seed) and not isinstance(seed, (bool, str)):
     seed_int = int(seed)
     np.random.seed(seed_int)
     tf.compat.v1.set_random_seed(seed_int)
@@ -29,10 +29,12 @@ if seed is not None and np.isscalar(seed) and not isinstance(
 # ***********************************************************************
 
 # data_folder = sys.argv[1]
+Xsc = r_session_params.get("Xsc", None)
+Ysc = r_session_params.get("Ysc", None)
+Ypat = r_session_params.get("Ypat", None)
+Xpat = r_session_params.get("Xpat", None)
 
 # Load single-cell expression data and labels
-Xsc = np.loadtxt(data_folder + "scExp.csv", delimiter=",", skiprows=1)
-Ysc = np.loadtxt(data_folder + "scLab.csv", delimiter=",", skiprows=1)
 Nsc = Ysc.shape[0]
 Fsc = Xsc.shape[1]
 Lsc = Ysc.shape[1]
@@ -40,7 +42,6 @@ idx_sc = np.arange(Nsc)
 np.random.shuffle(idx_sc)
 
 # Load patient expression data (no labels)
-Xpat = np.loadtxt(data_folder + "patExp.csv", delimiter=",", skiprows=1)
 Npat = Xpat.shape[0]
 Fpat = Xpat.shape[1]
 idx_pat = np.arange(Npat)

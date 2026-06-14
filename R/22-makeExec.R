@@ -72,6 +72,16 @@ makeExec <- function(
     collapse = '\n'
   )
 
+  # Prepend graph reset and config for safe inline execution via reticulate
+  out_content <- paste(
+    '# Reset TF graph to avoid variable accumulation in reticulate session',
+    'tf.reset_default_graph()',
+    'config = tf.ConfigProto()',
+    out_content,
+    sep = '\n',
+    collapse = '\n'
+  )
+
   #   writeLines(out_content, con = file.path(DEGAS.toolsPath, out_filename))
 
   out_content

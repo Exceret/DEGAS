@@ -1,5 +1,9 @@
 # Diagnostic Evidence GAuge of Single cells (DEGAS): A flexible deep transfer learning framework for prioritizing cells in relation to disease
 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/Exceret/DEGAS/actions/workflows/R-CMD-check.yaml/badge.svghttps://github.com/Exceret/DEGAS/actions/workflows/R-CMD-check.yaml/badge.svghttps://github.com/Exceret/DEGAS/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Exceret/DEGAS/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
 Please use [SigBridgeR](https://github.com/WangLabCSU/SigBridgeR) for the fork version of DEGAS. Bug reports and feature requests are welcomed at [SigBridgeR-issues](https://github.com/WangLabCSU/SigBridgeR/issues).
 
 

@@ -1,4 +1,10 @@
 # ? Package startup messages
+.onLoad <- function(libname, pkgname) {
+  # Declare Python dependencies for reticulate
+  reticulate::py_require(c("tensorflow", "numpy"))
+  invisible()
+}
+
 .onAttach <- function(libname, pkgname) {
   pkg_version <- utils::packageVersion(pkgname)
 
@@ -9,21 +15,9 @@
   invisible()
 }
 
-.onLoad <- function(libname, pkgname) {
-  # Add timestamp to cli functions
-  assign(
-    "ts_cli",
-    SigBridgeRUtils::CreateTimeStampCliEnv(),
-    envir = asNamespace(pkgname)
-  )
+ts_cli <- SigBridgeRUtils::CreateTimeStampCliEnv()
 
-  invisible()
-}
-
-utils::globalVariables(c(
-  "ts_cli",
-  "py"
-))
+py <- reticulate::py
 
 #'@importFrom data.table `%chin%` %chin%
 NULL

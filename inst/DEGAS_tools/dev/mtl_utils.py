@@ -6,16 +6,18 @@ This module contains functions and tools shared by all MTL scripts.
 Note: This file will be inlined into individual scripts by `build_scripts.py`.
 """
 
-import tensorflow as tf
-if int(tf.__version__[0]) > 1:
-    import tensorflow.compat.v1 as tf
-    tf.disable_v2_behavior()
 from functools import partial
-import numpy as np
 import math
 import os
 import sys
 from os.path import join
+import numpy as np
+import tensorflow as tf
+
+if int(tf.__version__[0]) > 1:
+    import tensorflow.compat.v1 as tf
+
+    tf.disable_v2_behavior()
 
 tf.config.optimizer.set_jit(True)
 # ***********************************************************************
@@ -55,20 +57,21 @@ def get_weight(shape, lambda1):
     """
     var = tf.Variable(tf.random_normal(shape), dtype=tf.float32)
     if tf.__version__[0] == "1":
-        tf.add_to_collection("losses",
-                             tf.contrib.layers.l2_regularizer(lambda1)(var))
+        tf.add_to_collection("losses", tf.contrib.layers.l2_regularizer(lambda1)(var))
     else:
-        tf.add_to_collection("losses", tf.keras.regularizers.L2(lambda1)(var))
+        tf.add_to_collection("losses", lambda1 * tf.nn.l2_loss(var))
     return var
 
 
-def add_layer(input,
-              in_size,
-              out_size,
-              activation_function=None,
-              dropout_function=False,
-              lambda1=0,
-              keep_prob1=1):
+def add_layer(
+    input,
+    in_size,
+    out_size,
+    activation_function=None,
+    dropout_function=False,
+    lambda1=0,
+    keep_prob1=1,
+):
     """
     Add a neural network layer
     """
@@ -77,22 +80,21 @@ def add_layer(input,
     Wx_plus_b = tf.matmul(input, Weights) + biases
     if dropout_function:
         Wx_plus_b = tf.nn.dropout(Wx_plus_b, keep_prob=keep_prob1)
-    outputs = activation_function(
-        Wx_plus_b) if activation_function else Wx_plus_b
+    outputs = activation_function(Wx_plus_b) if activation_function else Wx_plus_b
     return outputs
 
 
 def maximum_mean_discrepancy(x, y, kernel=gaussian_kernel_matrix):
     """
     Computes the Maximum Mean Discrepancy (MMD) of two samples: x and y.
-    
+
     Maximum Mean Discrepancy (MMD) is a distance-measure between the samples of
     the distributions of x and y. Here we use the kernel two sample estimate
     using the empirical mean of the two distributions.
-    
-    MMD^2(P, Q) = || \E{\phi(x)} - \E{\phi(y)} ||^2
-                = \E{ K(x, x) } + \E{ K(y, y) } - 2 \E{ K(x, y) },
-    where K = <\phi(x), \phi(y)>,
+
+    MMD^2(P, Q) = || \\E{\\phi(x)} - \\E{\\phi(y)} ||^2
+                = \\E{ K(x, x) } + \\E{ K(y, y) } - 2 \\E{ K(x, y) },
+    where K = <\\phi(x), \\phi(y)>,
       is the desired kernel function, in this case a radial basis kernel.
     Args:
       x: a tensor of shape [num_samples, num_features]
@@ -113,10 +115,10 @@ def maximum_mean_discrepancy(x, y, kernel=gaussian_kernel_matrix):
 def mmd_loss(source_samples, target_samples, scope=None):
     """
     Adds a similarity loss term, the MMD between two representations
-    
+
     This Maximum Mean Discrepancy (MMD) loss is calculated with a number of
     different Gaussian kernels.
-    
+
     Args:
       source_samples: a tensor of shape [num_samples, num_features].
       target_samples: a tensor of shape [num_samples, num_features].
@@ -125,14 +127,30 @@ def mmd_loss(source_samples, target_samples, scope=None):
         a scalar tensor representing the MMD loss value.
     """
     sigmas = [
-        1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 5, 10, 15, 20, 25, 30, 35, 100,
-        1e3, 1e4, 1e5, 1e6
+        1e-6,
+        1e-5,
+        1e-4,
+        1e-3,
+        1e-2,
+        1e-1,
+        1,
+        5,
+        10,
+        15,
+        20,
+        25,
+        30,
+        35,
+        100,
+        1e3,
+        1e4,
+        1e5,
+        1e6,
     ]
-    gaussian_kernel = partial(gaussian_kernel_matrix,
-                              sigmas=tf.constant(sigmas))
-    loss_value = maximum_mean_discrepancy(source_samples,
-                                          target_samples,
-                                          kernel=gaussian_kernel)
+    gaussian_kernel = partial(gaussian_kernel_matrix, sigmas=tf.constant(sigmas))
+    loss_value = maximum_mean_discrepancy(
+        source_samples, target_samples, kernel=gaussian_kernel
+    )
     loss_value = tf.maximum(1e-4, loss_value)
     assert_op = tf.Assert(tf.is_finite(loss_value), [loss_value])
     with tf.control_dependencies([assert_op]):
@@ -162,8 +180,14 @@ def multi_mmd(d1, d2, d3, d4):
     """
     Multiple-group MMD calculation
     """
-    return (mmd_loss(d1, d2) + mmd_loss(d1, d3) + mmd_loss(d1, d4) +
-            mmd_loss(d2, d3) + mmd_loss(d2, d4) + mmd_loss(d3, d4)) / 6
+    return (
+        mmd_loss(d1, d2)
+        + mmd_loss(d1, d3)
+        + mmd_loss(d1, d4)
+        + mmd_loss(d2, d3)
+        + mmd_loss(d2, d4)
+        + mmd_loss(d3, d4)
+    ) / 6
 
 
 def squared_dist(A):
@@ -192,7 +216,7 @@ def pairwise_dist_loss(A, labels):
 
 def Rmatrix(surv):
     """
-    Generate the risk set matrix for the Cox model - optimized version 
+    Generate the risk set matrix for the Cox model - optimized version
     """
     surv = np.asarray(surv)
     return (surv[:, np.newaxis] <= surv[np.newaxis, :]).astype(int)
@@ -284,9 +308,9 @@ def resample(prc_cut, Y, train):
             pass
         else:
             idx = np.squeeze(np.where(Y[train, i] >= 1))
-            choice = np.random.choice(train[idx],
-                                      int(colsums[i] - cutoff),
-                                      replace=False)
+            choice = np.random.choice(
+                train[idx], int(colsums[i] - cutoff), replace=False
+            )
             rem = rem + choice.tolist()
     return list(set(train) - set(rem)) + add
     # return np.concatenate((list([val for val in train if val not in rem]),add));	 # slower for smaller datasets
@@ -304,13 +328,9 @@ def resample_mixGamma(X, Y, train, nsamp, depth):
     for i in range(len(colsums)):
         idx = idx + [np.squeeze(np.where(Y[train, i] >= 1)).tolist()]
         if samp_per_class > colsums[i]:
-            choice = np.random.choice(train[idx[i]],
-                                      int(samp_per_class),
-                                      replace=True)
+            choice = np.random.choice(train[idx[i]], int(samp_per_class), replace=True)
         else:
-            choice = np.random.choice(train[idx[i]],
-                                      int(samp_per_class),
-                                      replace=False)
+            choice = np.random.choice(train[idx[i]], int(samp_per_class), replace=False)
         add = add + choice.tolist()
     tmpX = np.zeros([nsamp, X.shape[1]])
     tmpY = np.zeros([nsamp, Y.shape[1]])
@@ -321,11 +341,19 @@ def resample_mixGamma(X, Y, train, nsamp, depth):
         tmpIdx = list()
         for j in range(len(colsums)):
             if int(intBinom[j]) > colsums[j]:
-                tmpIdx = tmpIdx + np.random.choice(
-                    train[idx[j]], int(intBinom[j]), replace=True).tolist()
+                tmpIdx = (
+                    tmpIdx
+                    + np.random.choice(
+                        train[idx[j]], int(intBinom[j]), replace=True
+                    ).tolist()
+                )
             else:
-                tmpIdx = tmpIdx + np.random.choice(
-                    train[idx[j]], int(intBinom[j]), replace=False).tolist()
+                tmpIdx = (
+                    tmpIdx
+                    + np.random.choice(
+                        train[idx[j]], int(intBinom[j]), replace=False
+                    ).tolist()
+                )
         tmpX[i, :] = np.mean(X[tmpIdx, :], axis=0) + 1e-3
         tmpY[i, :] = intBinom / sum(intBinom)
 
@@ -333,8 +361,10 @@ def resample_mixGamma(X, Y, train, nsamp, depth):
     # tmpX = np.transpose(scaler.fit_transform(np.transpose(zscore(tmpX,axis=0))))     # CHANGED 20201212
     # return(tmpX,tmpY)		#CHANGED 20201211
 
-    return (np.concatenate((X[add, :], tmpX),
-                           axis=0), np.concatenate((Y[add, :], tmpY)))
+    return (
+        np.concatenate((X[add, :], tmpX), axis=0),
+        np.concatenate((Y[add, :], tmpY)),
+    )
     # return (
     #     np.concatenate((X[add[1 : np.round(nsamp / 2)], :], tmpX), axis=0),
     #     np.concatenate((Y[add[1 : np.round(nsamp / 2)], :], tmpY)),
@@ -350,6 +380,6 @@ def intersect(lst1, lst2):
 
 def rank(inputdat, axis=-1):
     """
-    Data rank 
+    Data rank
     """
     return np.argsort(np.argsort(inputdat, axis=axis), axis=axis)

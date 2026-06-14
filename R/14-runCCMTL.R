@@ -103,13 +103,14 @@ runCCMTL.optimized <- function(
       # "DenseNet" # ! makeExec2
     )
   }
+  reticulate::py_run_string("import os") # startup
+  py <- reticulate::py
 
-  # R matrix -> nparray
+  # R matrix -> nparray (set individual globals for Python access)
   py$Xsc <- reticulate::r_to_py(scExp)
   py$Ysc <- reticulate::r_to_py(scLab)
-  py$Xpat <- reticulate::r_to_py(patExp) # bulk
-  py$Ypat <- reticulate::r_to_py(patLab) # pheno
-
+  py$Xpat <- reticulate::r_to_py(patExp)
+  py$Ypat <- reticulate::r_to_py(patLab)
   py$train_steps <- reticulate::r_to_py(DEGAS.train_steps)
   py$scbatch_sz <- reticulate::r_to_py(DEGAS.scbatch_sz)
   py$patbatch_sz <- reticulate::r_to_py(DEGAS.patbatch_sz)
@@ -123,14 +124,14 @@ runCCMTL.optimized <- function(
   reticulate::py_run_string(full_degas_script)
 
   # * extract result
-  activation <- rlang::list2(py$activation)
+  activation <- py$activation # A list
 
   additional_layers <- ifelse(
     DEGAS.model_type %in% c("ClassClass", "ClassCox"),
-    3,
-    0
+    3L,
+    0L
   )
-  total_layers <- DEGAS.ff_depth + 1 + additional_layers
+  total_layers <- DEGAS.ff_depth + 1L + additional_layers
   thetas <- rlang::list2(
     !!!rlang::set_names(
       lapply(seq_len(total_layers), function(j) py[[glue::glue("Theta{j}")]]),

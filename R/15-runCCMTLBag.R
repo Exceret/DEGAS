@@ -21,23 +21,22 @@ runCCMTLBag.optimized <- function(
     )
   }
 
+  res <- vector(mode = "list", length = Bagdepth)
+  for (i in seq_len(Bagdepth)) {
+    DEGAS.seed_i <- DEGAS.seed + (i - 1)
 
-  purrr::map(
-    seq_len(Bagdepth),
-    function(i) {
-      DEGAS.seed_i <- DEGAS.seed + (i - 1)
+    dots$DEGAS.seed <- DEGAS.seed_i
 
-      dots$DEGAS.seed <- DEGAS.seed_i
+    if (verbose) {
+      ts_cli$cli_alert_info("Training progress: {i}/{Bagdepth}...")
+    }
 
-      if (verbose) {
-        ts_cli$cli_alert_info("Training progress: {i}/{Bagdepth}...")
-      }
+    res[[i]] <- rlang::exec(
+      .fn = runCCMTL.optimized,
+      verbose = verbose,
+      !!!dots
+    ) # return S4 ccModel
+  }
 
-      result <- rlang::exec(runCCMTL.optimized, verbose = verbose, !!!dots, )
-      class(result) <- "ccModel"
-
-      result
-    },
-    .progress = verbose
-  )
+  res
 }
