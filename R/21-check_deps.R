@@ -19,43 +19,47 @@ NULL
 #'
 #' @export
 checkOS <- function() {
-    return(Sys.info()['sysname'])
+  return(Sys.info()['sysname'])
 }
 
 #' @rdname system-checks
 #' @description
 #' checkForPy checks Python version using the configured Python location.
 #'
+#' @param pyloc Character string specifying the path to the Python executable.
+#'
 #' @return System command exit status (0 for success)
 #'
 #' @examples
 #' # Check Python version
 #' \dontrun{
-#' if (checkForPy() == 0) {
+#' if (checkForPy("python3") == 0) {
 #' print("Python is available")
 #' }
 #' }
 #'
 #' @export
-checkForPy <- function() {
-    return(system(paste0(DEGAS.pyloc, " -V")))
+checkForPy <- function(pyloc) {
+  return(system(paste0(pyloc, " -V")))
 }
 
 #' @rdname system-checks
 #' @description
 #' checkForTF checks if TensorFlow can be imported in Python.
 #'
+#' @param pyloc Character string specifying the path to the Python executable.
+#'
 #' @return System command exit status (0 if TensorFlow imports successfully)
 #'
 #' @examples
 #' # Check TensorFlow availability
 #' \dontrun{
-#' if (checkForTF() == 0) {
+#' if (checkForTF("python3") == 0) {
 #' print("TensorFlow is available")
 #' }
 #' }
 #'
 #' @export
-checkForTF <- function() {
-    return(system(paste0(DEGAS.pyloc, " -c 'import tensorflow'")))
+checkForTF <- function(pyloc) {
+  return(system(paste0(pyloc, " -c 'import tensorflow'")))
 }

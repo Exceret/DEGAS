@@ -4,7 +4,7 @@
 \alias{makeExec}
 \title{Generate Python Executable for Neural Network}
 \usage{
-makeExec(tmpDir, FFdepth, model_type)
+makeExec(tmpDir, FFdepth, model_type, DEGAS.toolsPath)
 }
 \arguments{
 \item{tmpDir}{Temporary directory for script generation}
@@ -13,6 +13,9 @@ makeExec(tmpDir, FFdepth, model_type)
 
 \item{model_type}{Type of neural network model. Must be one of:
 'BlankClass', 'ClassBlank', 'BlankCox', 'ClassClass', or 'ClassCox'}
+
+\item{DEGAS.toolsPath}{Character string specifying the path to the DEGAS
+Python tools directory containing MTL script templates.}
 }
 \value{
 None. Generates Python scripts in the specified temporary directory.
@@ -24,7 +27,7 @@ by combining multiple script parts into a complete TensorFlow model.
 \examples{
 \dontrun{
 # Create a 2-layer classifier model
-makeExec("/tmp/model/", 2, "ClassClass")
+makeExec("/tmp/model/", 2, "ClassClass", "/path/to/tools/")
 }
 
 }

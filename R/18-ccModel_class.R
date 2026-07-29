@@ -23,13 +23,13 @@
 #' @references Johnson TS, Yu CY, Huang Z, Xu S, Wang T, Dong C, et al. Diagnostic Evidence GAuge of Single cells (DEGAS): a flexible deep transfer learning framework for prioritizing cells in relation to disease. Genome Med. 2022 Feb 1;14(1):11.
 #'
 setClass(
-    "ccModel",
-    slots = list(
-        Bias = "list",
-        Theta = "list",
-        Activation = "list",
-        Depth = "numeric",
-        Model_type = "character",
-        Architecture = "character"
-    )
+  "ccModel",
+  slots = list(
+    Bias = "list",
+    Theta = "list",
+    Activation = "list",
+    Depth = "numeric",
+    Model_type = "character",
+    Architecture = "character"
+  )
 )

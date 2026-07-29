@@ -3,3 +3,8 @@
 
 
 ^LICENSE\.md$
+
+
+# flir files
+^flir$
+.codebuddy/

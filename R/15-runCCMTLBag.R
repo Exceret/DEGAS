@@ -23,6 +23,26 @@
 #'   network architecture.
 #' @param Bagdepth Integer specifying the number of bootstrap models to train
 #'   in the ensemble.
+#' @param DEGAS.pyloc Character string specifying the path to the Python
+#'   executable to use for model training.
+#' @param DEGAS.toolsPath Character string specifying the path to the DEGAS
+#'   Python tools directory.
+#' @param DEGAS.train_steps Integer specifying the number of training steps.
+#'   Default: 2000.
+#' @param DEGAS.scbatch_sz Integer specifying the single-cell batch size.
+#'   Default: 200.
+#' @param DEGAS.patbatch_sz Integer specifying the patient batch size.
+#'   Default: 50.
+#' @param DEGAS.hidden_feats Integer specifying the number of hidden features.
+#'   Default: 50.
+#' @param DEGAS.do_prc Numeric specifying the dropout keep probability (0-1).
+#'   Default: 0.5.
+#' @param DEGAS.lambda1 Numeric specifying the L2 regularization term.
+#'   Default: 3.0.
+#' @param DEGAS.lambda2 Numeric specifying the patient loss term.
+#'   Default: 3.0.
+#' @param DEGAS.lambda3 Numeric specifying the MMD loss term.
+#'   Default: 3.0.
 #' @param DEGAS.seed Integer specifying the base random seed for reproducible
 #'   model training. Each model in the ensemble uses a derived seed.
 #' @param verbose Logical, whether to print messages.
@@ -66,6 +86,8 @@
 #'   architecture = "DenseNet",
 #'   FFdepth = 3,
 #'   Bagdepth = 10,
+#'   DEGAS.pyloc = "python3",
+#'   DEGAS.toolsPath = "/path/to/tools/",
 #'   DEGAS.seed = 42
 #' )
 #'
@@ -82,72 +104,92 @@
 #' @references Johnson TS, Yu CY, Huang Z, Xu S, Wang T, Dong C, et al. Diagnostic Evidence GAuge of Single cells (DEGAS): a flexible deep transfer learning framework for prioritizing cells in relation to disease. Genome Med. 2022 Feb 1;14(1):11.
 #'
 runCCMTLBag.optimized <- function(
-    scExp,
-    scLab,
-    patExp,
-    patLab,
-    tmpDir,
-    model_type,
-    architecture,
-    FFdepth,
-    Bagdepth,
-    DEGAS.seed,
-    verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE
+  scExp,
+  scLab,
+  patExp,
+  patLab,
+  tmpDir,
+  model_type,
+  architecture,
+  FFdepth,
+  Bagdepth,
+  DEGAS.pyloc,
+  DEGAS.toolsPath,
+  DEGAS.train_steps = 2000,
+  DEGAS.scbatch_sz = 200,
+  DEGAS.patbatch_sz = 50,
+  DEGAS.hidden_feats = 50,
+  DEGAS.do_prc = 0.5,
+  DEGAS.lambda1 = 3.0,
+  DEGAS.lambda2 = 3.0,
+  DEGAS.lambda3 = 3.0,
+  DEGAS.seed,
+  verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE
 ) {
-    if (verbose) {
-        ts_cli$cli_alert_info(
-            "{FFdepth}-layer {architecture} {model_type} DEGAS model"
-        )
-    }
+  if (verbose) {
+    ts_cli$cli_alert_info(
+      "{FFdepth}-layer {architecture} {model_type} DEGAS model"
+    )
+  }
 
-    if (!dir.exists(tmpDir)) {
-        dir.create(tmpDir, recursive = TRUE)
-    }
-    # Write files once at the beginning
-    writeInputFiles.optimized(
+  if (!dir.exists(tmpDir)) {
+    dir.create(tmpDir, recursive = TRUE)
+  }
+  # Write files once at the beginning
+  writeInputFiles.optimized(
+    scExp = scExp,
+    scLab = scLab,
+    patExp = patExp,
+    patLab = patLab,
+    tmpDir = tmpDir
+  )
+
+  # Check Python with error handling
+  py_check <- processx::run(command = DEGAS.pyloc, args = "--version")
+  if (!is.null(py_check$error)) {
+    cli::cli_abort("Python check failed: ", py_check$error$message)
+  } else if (verbose) {
+    ts_cli$cli_alert_info(
+      "Python check passed, using {py_check$stdout}"
+    )
+  }
+
+  purrr::map(
+    seq_len(Bagdepth),
+    function(i) {
+      DEGAS.seed_i <- DEGAS.seed + (i - 1)
+
+      if (verbose) {
+        ts_cli$cli_alert_info("Training progress: {i}/{Bagdepth}...")
+      }
+
+      result <- runCCMTL.optimized(
         scExp = scExp,
         scLab = scLab,
         patExp = patExp,
         patLab = patLab,
-        tmpDir = tmpDir
-    )
+        tmpDir = tmpDir,
+        model_type = model_type,
+        architecture = architecture,
+        FFdepth = FFdepth,
+        DEGAS.pyloc = DEGAS.pyloc,
+        DEGAS.toolsPath = DEGAS.toolsPath,
+        DEGAS.train_steps = DEGAS.train_steps,
+        DEGAS.scbatch_sz = DEGAS.scbatch_sz,
+        DEGAS.patbatch_sz = DEGAS.patbatch_sz,
+        DEGAS.hidden_feats = DEGAS.hidden_feats,
+        DEGAS.do_prc = DEGAS.do_prc,
+        DEGAS.lambda1 = DEGAS.lambda1,
+        DEGAS.lambda2 = DEGAS.lambda2,
+        DEGAS.lambda3 = DEGAS.lambda3,
+        DEGAS.seed = DEGAS.seed_i,
+        # Written files will not be rewritten
+        force_rewrite = FALSE
+      )
+      class(result) <- "ccModel"
 
-    # Check Python with error handling
-    py_check <- processx::run(command = DEGAS.pyloc, args = "--version")
-    if (!is.null(py_check$error)) {
-        cli::cli_abort("Python check failed: ", py_check$error$message)
-    } else if (verbose) {
-        ts_cli$cli_alert_info(
-            "Python check passed, using {py_check$stdout}"
-        )
-    }
-
-    purrr::map(
-        seq_len(Bagdepth),
-        function(i) {
-            DEGAS.seed_i <- DEGAS.seed + (i - 1)
-
-            if (verbose) {
-                ts_cli$cli_alert_info("Training progress: {i}/{Bagdepth}...")
-            }
-
-            result <- runCCMTL.optimized(
-                scExp = scExp,
-                scLab = scLab,
-                patExp = patExp,
-                patLab = patLab,
-                tmpDir = tmpDir,
-                model_type = model_type,
-                architecture = architecture,
-                FFdepth = FFdepth,
-                DEGAS.seed = DEGAS.seed_i,
-                # Written files will not be rewritten
-                force_rewrite = FALSE
-            )
-            class(result) <- "ccModel"
-
-            result
-        },
-        .progress = verbose
-    )
+      result
+    },
+    .progress = verbose
+  )
 }

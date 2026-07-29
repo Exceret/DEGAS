@@ -4,7 +4,7 @@
 \alias{makeExec2}
 \title{Generate DenseNet Python Executable}
 \usage{
-makeExec2(tmpDir, FFdepth, model_type)
+makeExec2(tmpDir, FFdepth, model_type, DEGAS.toolsPath)
 }
 \arguments{
 \item{tmpDir}{Temporary directory for script generation}
@@ -13,6 +13,9 @@ makeExec2(tmpDir, FFdepth, model_type)
 
 \item{model_type}{Type of neural network model. Must be one of:
 'BlankClass', 'ClassBlank', 'BlankCox', 'ClassClass', or 'ClassCox'}
+
+\item{DEGAS.toolsPath}{Character string specifying the path to the DEGAS
+Python tools directory containing MTL script templates.}
 }
 \value{
 None. Generates Python scripts in the specified temporary directory.
@@ -24,7 +27,7 @@ implementation by combining multiple script parts into a complete TensorFlow mod
 \examples{
 \dontrun{
 # Create a 3-layer DenseNet classifier
-makeExec2("/tmp/densenet/", 3, "ClassClass")
+makeExec2("/tmp/densenet/", 3, "ClassClass", "/path/to/tools/")
 }
 
 }

@@ -9,9 +9,12 @@
 \usage{
 checkOS()
 
-checkForPy()
+checkForPy(pyloc)
 
-checkForTF()
+checkForTF(pyloc)
+}
+\arguments{
+\item{pyloc}{Character string specifying the path to the Python executable.}
 }
 \value{
 Character string of the operating system (e.g., "Windows", "Linux", "Darwin")
@@ -36,14 +39,14 @@ print(os)
 
 # Check Python version
 \dontrun{
-if (checkForPy() == 0) {
+if (checkForPy("python3") == 0) {
 print("Python is available")
 }
 }
 
 # Check TensorFlow availability
 \dontrun{
-if (checkForTF() == 0) {
+if (checkForTF("python3") == 0) {
 print("TensorFlow is available")
 }
 }

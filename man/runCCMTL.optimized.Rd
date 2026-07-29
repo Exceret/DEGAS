@@ -13,6 +13,16 @@ runCCMTL.optimized(
   model_type,
   architecture,
   FFdepth,
+  DEGAS.pyloc,
+  DEGAS.toolsPath,
+  DEGAS.train_steps = 2000,
+  DEGAS.scbatch_sz = 200,
+  DEGAS.patbatch_sz = 50,
+  DEGAS.hidden_feats = 50,
+  DEGAS.do_prc = 0.5,
+  DEGAS.lambda1 = 3,
+  DEGAS.lambda2 = 3,
+  DEGAS.lambda3 = 3,
   DEGAS.seed,
   force_rewrite = FALSE,
   verbose = SigBridgeRUtils::getFuncOption("verbose") \%||\% TRUE
@@ -43,8 +53,38 @@ One of: "DenseNet", "Standard".}
 \item{FFdepth}{Integer specifying the number of layers in the feed-forward
 network architecture.}
 
-\item{DEGAS.seed}{Integer specifying the random seed for reproducible
-model training.}
+\item{DEGAS.pyloc}{Character string specifying the path to the Python
+executable to use for model training.}
+
+\item{DEGAS.toolsPath}{Character string specifying the path to the DEGAS
+Python tools directory.}
+
+\item{DEGAS.train_steps}{Integer specifying the number of training steps.
+Default: 2000.}
+
+\item{DEGAS.scbatch_sz}{Integer specifying the single-cell batch size.
+Default: 200.}
+
+\item{DEGAS.patbatch_sz}{Integer specifying the patient batch size.
+Default: 50.}
+
+\item{DEGAS.hidden_feats}{Integer specifying the number of hidden features.
+Default: 50.}
+
+\item{DEGAS.do_prc}{Numeric specifying the dropout keep probability (0-1).
+Default: 0.5.}
+
+\item{DEGAS.lambda1}{Numeric specifying the L2 regularization term.
+Default: 3.0.}
+
+\item{DEGAS.lambda2}{Numeric specifying the patient loss term.
+Default: 3.0.}
+
+\item{DEGAS.lambda3}{Numeric specifying the MMD loss term.
+Default: 3.0.}
+
+\item{DEGAS.seed}{Integer or "NULL" specifying the random seed for
+reproducible model training.}
 
 \item{force_rewrite}{Logical indicating whether to force rewriting of input
 files even if they already exist. Default: FALSE.}

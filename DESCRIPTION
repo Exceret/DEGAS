@@ -2,7 +2,7 @@ Package: DEGAS
 Type: Package
 Title: DEGAS: A transfer learning framework to infer impressions of cellular and patient phenotypes between patients and single cells.
 Date: 2023-06-29
-Version: 1.0.0
+Version: 1.0.1
 Author: c(person("Travis", "Johnson", email = "johnstrs@iu.edu", role = c("aut", "cre")),
              person("Zhi", "Huang", email = "huang898@purdue.edu", role = c("aut", "cre"))
              )
@@ -26,5 +26,3 @@ Imports:
     stats
 Suggests: 
     matrixStats
-Remotes:
-    github::WangLabCSU/SigBridgeRUtils

@@ -44,97 +44,97 @@
 #' @export
 #'
 mad.test <- function(x, na.rm = TRUE) {
-    # Store data name for htest output
-    data_name <- deparse(substitute(x))
+  # Store data name for htest output
+  data_name <- deparse(substitute(x))
 
-    # Input validation
-    chk::chk_numeric(x)
+  # Input validation
+  chk::chk_numeric(x)
 
-    # Handle missing values
-    if (na.rm) {
-        complete_cases <- !is.na(x)
-        x_clean <- x[complete_cases]
-        original_indices <- which(complete_cases)
-    } else {
-        chk::chk_not_any_na(x)
-        x_clean <- x
-        original_indices <- seq_along(x)
-    }
+  # Handle missing values
+  if (na.rm) {
+    complete_cases <- !is.na(x)
+    x_clean <- x[complete_cases]
+    original_indices <- which(complete_cases)
+  } else {
+    chk::chk_not_any_na(x)
+    x_clean <- x
+    original_indices <- seq_along(x)
+  }
 
-    n <- length(x_clean)
+  n <- length(x_clean)
 
-    chk::chk_length(n)
+  chk::chk_length(n)
 
-    # Create data.table for efficient computation
-    dt <- data.table::data.table(
-        index = original_indices,
-        value = x_clean
-    )
+  # Create data.table for efficient computation
+  dt <- data.table::data.table(
+    index = original_indices,
+    value = x_clean
+  )
 
-    # Calculate median and MAD
-    median_val <- dt[, stats::median(`value`)]
-    abs_dev <- abs(dt$`value` - median_val)
-    mad_val <- stats::median(abs_dev)
-    mad_adjusted <- mad_val * 1.4826
+  # Calculate median and MAD
+  median_val <- dt[, stats::median(`value`)]
+  abs_dev <- abs(dt$`value` - median_val)
+  mad_val <- stats::median(abs_dev)
+  mad_adjusted <- mad_val * 1.4826
 
-    # Determine threshold based on sample size
-    if (n <= 4) {
-        threshold <- 2.5
-        method_used <- "MAD-based outlier detection (small sample n<=4, threshold=2.5)"
-    } else if (n == 5) {
-        threshold <- 2.8
-        method_used <- "MAD-based outlier detection (small sample n=5, threshold=2.8)"
-    } else {
-        threshold <- 3.0
-        method_used <- "MAD-based outlier detection (threshold=3.0)"
-    }
+  # Determine threshold based on sample size
+  if (n <= 4) {
+    threshold <- 2.5
+    method_used <- "MAD-based outlier detection (small sample n<=4, threshold=2.5)"
+  } else if (n == 5) {
+    threshold <- 2.8
+    method_used <- "MAD-based outlier detection (small sample n=5, threshold=2.8)"
+  } else {
+    threshold <- 3.0
+    method_used <- "MAD-based outlier detection (threshold=3.0)"
+  }
 
-    # Calculate MAD-based z-scores
-    dt[, `z_score` := abs(`value` - `median_val`) / `mad_adjusted`] # id mad_adjusted == 0, z_score will be NA
+  # Calculate MAD-based z-scores
+  dt[, `z_score` := abs(`value` - `median_val`) / `mad_adjusted`] # id mad_adjusted == 0, z_score will be NA
 
-    # Identify outliers
-    dt[, `is_outlier` := `z_score` > `threshold`]
+  # Identify outliers
+  dt[, `is_outlier` := `z_score` > `threshold`]
 
-    # Get outlier information
-    outliers_dt <- dt[`is_outlier` == TRUE]
-    n_outliers <- nrow(outliers_dt)
+  # Get outlier information
+  outliers_dt <- dt[`is_outlier` == TRUE]
+  n_outliers <- nrow(outliers_dt)
 
-    # Calculate test statistic (z-score of most extreme outlier)
-    if (n_outliers > 0) {
-        statistic_val <- max(dt$z_score)
-        # Get indices of outliers in original data (before NA removal)
-        outlier_indices <- dt[`is_outlier` == TRUE, `index`]
-    } else {
-        statistic_val <- max(dt$z_score)
-        outlier_indices <- integer(0)
-    }
+  # Calculate test statistic (z-score of most extreme outlier)
+  if (n_outliers > 0) {
+    statistic_val <- max(dt$z_score)
+    # Get indices of outliers in original data (before NA removal)
+    outlier_indices <- dt[`is_outlier` == TRUE, `index`]
+  } else {
+    statistic_val <- max(dt$z_score)
+    outlier_indices <- integer(0)
+  }
 
-    # Calculate approximate p-value
-    # Based on probability of observing such extreme value in normal distribution
-    if (mad_adjusted > 0) {
-        pval <- 2 * (1 - stats::pnorm(statistic_val))
-        # Adjust for multiple testing (Bonferroni correction)
-        pval <- min(pval * n, 1.0)
-    } else {
-        pval <- NA_real_
-    }
+  # Calculate approximate p-value
+  # Based on probability of observing such extreme value in normal distribution
+  if (mad_adjusted > 0) {
+    pval <- 2 * (1 - stats::pnorm(statistic_val))
+    # Adjust for multiple testing (Bonferroni correction)
+    pval <- min(pval * n, 1.0)
+  } else {
+    pval <- NA_real_
+  }
 
-    # Create htest structure
-    result <- list(
-        statistic = c("MAD z-score" = statistic_val),
-        parameter = c(
-            "n" = n,
-            "median" = median_val,
-            "mad" = mad_adjusted,
-            "threshold" = threshold
-        ),
-        p.value = pval,
-        method = method_used,
-        data.name = data_name,
-        alternative = "at least one value is an outlier",
-        outlier.indices = outlier_indices
-    )
+  # Create htest structure
+  result <- list(
+    statistic = c("MAD z-score" = statistic_val),
+    parameter = c(
+      "n" = n,
+      "median" = median_val,
+      "mad" = mad_adjusted,
+      "threshold" = threshold
+    ),
+    p.value = pval,
+    method = method_used,
+    data.name = data_name,
+    alternative = "at least one value is an outlier",
+    outlier.indices = outlier_indices
+  )
 
-    class(result) <- "htest"
-    result
+  class(result) <- "htest"
+  result
 }

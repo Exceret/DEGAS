@@ -31,16 +31,16 @@
 #' @family DEGAS
 #'
 Vec2sparse <- function(x, col_prefix = "") {
-    rows <- seq_along(x)
-    cols <- as.factor(x)
-    col_names <- levels(cols)
-    if (nzchar(col_prefix)) {
-        col_names <- paste0(col_prefix, col_names)
-    }
-    Matrix::sparseMatrix(
-        i = rows,
-        j = as.integer(cols),
-        dims = c(length(x), nlevels(cols)),
-        dimnames = list(names(x), col_names)
-    )
+  rows <- seq_along(x)
+  cols <- as.factor(x)
+  col_names <- levels(cols)
+  if (nzchar(col_prefix)) {
+    col_names <- paste0(col_prefix, col_names)
+  }
+  Matrix::sparseMatrix(
+    i = rows,
+    j = as.integer(cols),
+    dims = c(length(x), nlevels(cols)),
+    dimnames = list(names(x), col_names)
+  )
 }

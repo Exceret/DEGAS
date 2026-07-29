@@ -19,13 +19,13 @@
 #'
 #' @export
 predClass <- function(ccModel1, Exp, scORpat) {
-    if (ccModel1@Architecture == "DenseNet") {
-        return(predClass2(ccModel1, Exp, scORpat))
-    } else if (ccModel1@Architecture == "Standard") {
-        return(predClass1(ccModel1, Exp, scORpat))
-    } else {
-        stop("Incorrect architecture argument")
-    }
+  if (ccModel1@Architecture == "DenseNet") {
+    return(predClass2(ccModel1, Exp, scORpat))
+  } else if (ccModel1@Architecture == "Standard") {
+    return(predClass1(ccModel1, Exp, scORpat))
+  } else {
+    stop("Incorrect architecture argument")
+  }
 }
 
 # Prediction from trained standard architecture model
@@ -42,60 +42,60 @@ predClass <- function(ccModel1, Exp, scORpat) {
 #'
 #' @export
 predClass1 <- function(ccModel1, Exp, scORpat) {
-    Z = Exp
-    rm(Exp)
-    if (
-        ccModel1@Model_type == 'BlankClass' ||
-            ccModel1@Model_type == 'ClassBlank' ||
-            ccModel1@Model_type == 'ClassBlank'
-    ) {
-        for (i in 1:(ccModel1@Depth)) {
-            calcZ = paste0(
-                ccModel1@Activation[[i]],
-                "(sweep((as.matrix(Z) %*% ccModel1@Theta[[",
-                as.character(i),
-                "]]),2,ccModel1@Bias[[",
-                as.character(i),
-                "]],'+'))"
-            )
-            Z = eval(parse(text = calcZ))
-        }
-        return(Z)
-    } else {
-        for (i in 1:(ccModel1@Depth - 4)) {
-            calcZ = paste0(
-                ccModel1@Activation[[i]],
-                "(sweep((as.matrix(Z) %*% ccModel1@Theta[[",
-                as.character(i),
-                "]]),2,ccModel1@Bias[[",
-                as.character(i),
-                "]],'+'))"
-            )
-            Z = eval(parse(text = calcZ))
-        }
+  Z <- Exp
+  rm(Exp)
+  if (
+    ccModel1@Model_type == 'BlankClass' ||
+      ccModel1@Model_type == 'ClassBlank' ||
+      ccModel1@Model_type == 'ClassBlank'
+  ) {
+    for (i in 1:(ccModel1@Depth)) {
+      calcZ <- paste0(
+        ccModel1@Activation[[i]],
+        "(sweep((as.matrix(Z) %*% ccModel1@Theta[[",
+        as.character(i),
+        "]]),2,ccModel1@Bias[[",
+        as.character(i),
+        "]],'+'))"
+      )
+      Z <- eval(parse(text = calcZ))
     }
-    if (toupper(scORpat) == 'SC') {
-        calcPred = paste0(
-            ccModel1@Activation[[ccModel1@Depth - 3]],
-            "(sweep((Z %*% ccModel1@Theta[[",
-            as.character(ccModel1@Depth - 3),
-            "]]),2,ccModel1@Bias[[",
-            as.character(ccModel1@Depth - 3),
-            "]],'+'))"
-        )
-    } else if (toupper(scORpat) == 'PAT') {
-        calcPred = paste0(
-            ccModel1@Activation[[ccModel1@Depth - 2]],
-            "(sweep((Z %*% ccModel1@Theta[[",
-            as.character(ccModel1@Depth - 2),
-            "]]),2,ccModel1@Bias[[",
-            as.character(ccModel1@Depth - 2),
-            "]],'+'))"
-        )
-    } else {
-        stop("Incorrect prediction argument. Please use 'sc' or 'pat'")
+    return(Z)
+  } else {
+    for (i in 1:(ccModel1@Depth - 4)) {
+      calcZ <- paste0(
+        ccModel1@Activation[[i]],
+        "(sweep((as.matrix(Z) %*% ccModel1@Theta[[",
+        as.character(i),
+        "]]),2,ccModel1@Bias[[",
+        as.character(i),
+        "]],'+'))"
+      )
+      Z <- eval(parse(text = calcZ))
     }
-    return(eval(parse(text = calcPred)))
+  }
+  if (toupper(scORpat) == 'SC') {
+    calcPred <- paste0(
+      ccModel1@Activation[[ccModel1@Depth - 3]],
+      "(sweep((Z %*% ccModel1@Theta[[",
+      as.character(ccModel1@Depth - 3),
+      "]]),2,ccModel1@Bias[[",
+      as.character(ccModel1@Depth - 3),
+      "]],'+'))"
+    )
+  } else if (toupper(scORpat) == 'PAT') {
+    calcPred <- paste0(
+      ccModel1@Activation[[ccModel1@Depth - 2]],
+      "(sweep((Z %*% ccModel1@Theta[[",
+      as.character(ccModel1@Depth - 2),
+      "]]),2,ccModel1@Bias[[",
+      as.character(ccModel1@Depth - 2),
+      "]],'+'))"
+    )
+  } else {
+    stop("Incorrect prediction argument. Please use 'sc' or 'pat'")
+  }
+  return(eval(parse(text = calcPred)))
 }
 
 #' @title Prediction from DenseNet Architecture Model
@@ -110,66 +110,66 @@ predClass1 <- function(ccModel1, Exp, scORpat) {
 #'
 #' @export
 predClass2 <- function(ccModel1, Exp, scORpat) {
-    Z = Exp
-    rm(Exp)
-    if (
-        ccModel1@Model_type == 'BlankClass' ||
-            ccModel1@Model_type == 'ClassBlank' ||
-            ccModel1@Model_type == 'BlankCox'
-    ) {
-        for (i in 1:(ccModel1@Depth)) {
-            calcZ = paste0(
-                ccModel1@Activation[[i]],
-                "(sweep((as.matrix(Z) %*% ccModel1@Theta[[",
-                as.character(i),
-                "]]),2,ccModel1@Bias[[",
-                as.character(i),
-                "]],'+'))"
-            )
-            if (i < ccModel1@Depth - 1) {
-                Z = cbind(Z, eval(parse(text = calcZ)))
-            } else {
-                Z = eval(parse(text = calcZ))
-            }
-        }
-        return(Z)
-    } else {
-        for (i in 1:(ccModel1@Depth - 4)) {
-            calcZ = paste0(
-                ccModel1@Activation[[i]],
-                "(sweep((as.matrix(Z) %*% ccModel1@Theta[[",
-                as.character(i),
-                "]]),2,ccModel1@Bias[[",
-                as.character(i),
-                "]],'+'))"
-            )
-            if (i < ccModel1@Depth - 4) {
-                Z = cbind(Z, eval(parse(text = calcZ)))
-            } else {
-                Z = eval(parse(text = calcZ))
-            }
-        }
+  Z <- Exp
+  rm(Exp)
+  if (
+    ccModel1@Model_type == 'BlankClass' ||
+      ccModel1@Model_type == 'ClassBlank' ||
+      ccModel1@Model_type == 'BlankCox'
+  ) {
+    for (i in 1:(ccModel1@Depth)) {
+      calcZ <- paste0(
+        ccModel1@Activation[[i]],
+        "(sweep((as.matrix(Z) %*% ccModel1@Theta[[",
+        as.character(i),
+        "]]),2,ccModel1@Bias[[",
+        as.character(i),
+        "]],'+'))"
+      )
+      if (i < ccModel1@Depth - 1) {
+        Z <- cbind(Z, eval(parse(text = calcZ)))
+      } else {
+        Z <- eval(parse(text = calcZ))
+      }
     }
-    if (toupper(scORpat) == 'SC') {
-        calcPred = paste0(
-            ccModel1@Activation[[ccModel1@Depth - 3]],
-            "(sweep((Z %*% ccModel1@Theta[[",
-            as.character(ccModel1@Depth - 3),
-            "]]),2,ccModel1@Bias[[",
-            as.character(ccModel1@Depth - 3),
-            "]],'+'))"
-        )
-    } else if (toupper(scORpat) == 'PAT') {
-        calcPred = paste0(
-            ccModel1@Activation[[ccModel1@Depth - 2]],
-            "(sweep((Z %*% ccModel1@Theta[[",
-            as.character(ccModel1@Depth - 2),
-            "]]),2,ccModel1@Bias[[",
-            as.character(ccModel1@Depth - 2),
-            "]],'+'))"
-        )
-    } else {
-        stop("Incorrect prediction argument. Please use 'sc' or 'pat'")
+    return(Z)
+  } else {
+    for (i in 1:(ccModel1@Depth - 4)) {
+      calcZ <- paste0(
+        ccModel1@Activation[[i]],
+        "(sweep((as.matrix(Z) %*% ccModel1@Theta[[",
+        as.character(i),
+        "]]),2,ccModel1@Bias[[",
+        as.character(i),
+        "]],'+'))"
+      )
+      if (i < ccModel1@Depth - 4) {
+        Z <- cbind(Z, eval(parse(text = calcZ)))
+      } else {
+        Z <- eval(parse(text = calcZ))
+      }
     }
-    return(eval(parse(text = calcPred)))
+  }
+  if (toupper(scORpat) == 'SC') {
+    calcPred <- paste0(
+      ccModel1@Activation[[ccModel1@Depth - 3]],
+      "(sweep((Z %*% ccModel1@Theta[[",
+      as.character(ccModel1@Depth - 3),
+      "]]),2,ccModel1@Bias[[",
+      as.character(ccModel1@Depth - 3),
+      "]],'+'))"
+    )
+  } else if (toupper(scORpat) == 'PAT') {
+    calcPred <- paste0(
+      ccModel1@Activation[[ccModel1@Depth - 2]],
+      "(sweep((Z %*% ccModel1@Theta[[",
+      as.character(ccModel1@Depth - 2),
+      "]]),2,ccModel1@Bias[[",
+      as.character(ccModel1@Depth - 2),
+      "]],'+'))"
+    )
+  } else {
+    stop("Incorrect prediction argument. Please use 'sc' or 'pat'")
+  }
+  return(eval(parse(text = calcPred)))
 }
