@@ -18,6 +18,7 @@ Imports:
     data.table,
     Matrix,
     methods,
+    mirai,
     processx,
     purrr,
     reticulate,
@@ -25,4 +26,7 @@ Imports:
     SigBridgeRUtils (>= 0.1.0),
     stats
 Suggests: 
-    matrixStats
+    matrixStats,
+    nortest
+Depends: 
+    R (>= 4.1.0)

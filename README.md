@@ -2,8 +2,10 @@
 
 Please use [SigBridgeR](https://github.com/WangLabCSU/SigBridgeR) for the fork version of DEGAS. Bug reports and feature requests are welcomed at [SigBridgeR-issues](https://github.com/WangLabCSU/SigBridgeR/issues).
 
-
+<!-- badges: start -->
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![R-CMD-check](https://github.com/Exceret/DEGAS/actions/workflows/R-CMD-check.yaml/badge.svghttps://github.com/Exceret/DEGAS/actions/workflows/R-CMD-check.yaml/badge.svghttps://github.com/Exceret/DEGAS/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Exceret/DEGAS/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
 
 ![DEGAS](figures/DEGAS.png "DEGAS")
 

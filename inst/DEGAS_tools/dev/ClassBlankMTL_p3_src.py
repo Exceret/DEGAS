@@ -30,7 +30,8 @@ lossLabel1 = tf.reduce_mean(
     tf.reduce_sum(
         tf.square(ys_sc - tf.slice(predict_sc, [0, 0], [lsc, Lsc])),
         reduction_indices=[1],
-    ))
+    )
+)
 
 # MMD loss for domain adaptation
 lossMMD = mmd_loss(
@@ -43,14 +44,14 @@ lossConstPTtoSC = tf.reduce_mean(
     tf.reduce_sum(
         tf.square(tf.slice(predict_sc, [lsc, 0], [lpat, Lsc]) - (1.0 / Lsc)),
         reduction_indices=[1],
-    ))
+    )
+)
 
 # Combined loss
 loss = 2 * lossLabel1 + lambda3 * lossMMD + lossConstPTtoSC
 
 # Optimizer
-train_step1 = tf.train.AdamOptimizer(learning_rate=0.01,
-                                     epsilon=1e-3).minimize(loss)
+train_step1 = tf.train.AdamOptimizer(learning_rate=0.01, epsilon=1e-3).minimize(loss)
 
 # ***********************************************************************
 # Training batch preparation function
@@ -60,7 +61,7 @@ train_step1 = tf.train.AdamOptimizer(learning_rate=0.01,
 def prepare_training_batch():
     """
     Prepare training batch with SC class balancing
-    
+
     Returns:
         tuple: (tensor_train, train_pat2) where
             - tensor_train: dict of training tensors
@@ -91,11 +92,7 @@ def prepare_training_batch():
 
     # Prepare training dictionary
     tensor_train = {
-        xs:
-        np.concatenate([resampleGammaXYsc[0],
-                        np.squeeze(Xpat[
-                            train_pat2,
-                        ])]),
+        xs: np.concatenate([resampleGammaXYsc[0], np.squeeze(Xpat[train_pat2,])]),
         ys_sc: resampleGammaXYsc[1],
         lsc: resampleGammaXYsc[1].shape[0],
         lpat: len(train_pat2),
@@ -130,16 +127,14 @@ for i in range(train_steps + 1):
     sess.run(train_step1, feed_dict=tensor_train)
 
     # Log and resample every 50 steps
-    if i % 50 == 0:
+    if i % 100 == 0:
         # Calculate loss values
         loss_val = sess.run(loss, feed_dict=tensor_train)
         lossLabel1_val = sess.run(lossLabel1, feed_dict=tensor_train)
         lossMMD_val = sess.run(lossMMD, feed_dict=tensor_train)
 
         # Print progress
-        print(
-            f"{i:<10} {loss_val:<15.6f} {lossLabel1_val:<15.6f} {lossMMD_val:<15.6f}"
-        )
+        print(f"{i:<10} {loss_val:<15.6f} {lossLabel1_val:<15.6f} {lossMMD_val:<15.6f}")
 
         # Prepare next batch (except for last iteration)
         if i < train_steps:

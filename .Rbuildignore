@@ -8,3 +8,8 @@
 # flir files
 ^flir$
 .codebuddy/
+.vscode
+DEGAS_res/
+^\.github$
+read_123902
+DEGAS_documentation\.md

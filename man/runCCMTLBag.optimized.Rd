@@ -12,20 +12,22 @@ runCCMTLBag.optimized(
   tmpDir,
   model_type,
   architecture,
-  FFdepth,
-  Bagdepth,
+  FFdepth = 3L,
+  Bagdepth = 5L,
   DEGAS.pyloc,
   DEGAS.toolsPath,
-  DEGAS.train_steps = 2000,
-  DEGAS.scbatch_sz = 200,
-  DEGAS.patbatch_sz = 50,
-  DEGAS.hidden_feats = 50,
+  DEGAS.train_steps = 2000L,
+  DEGAS.scbatch_sz = 200L,
+  DEGAS.patbatch_sz = 50L,
+  DEGAS.hidden_feats = 50L,
   DEGAS.do_prc = 0.5,
   DEGAS.lambda1 = 3,
   DEGAS.lambda2 = 3,
   DEGAS.lambda3 = 3,
   DEGAS.seed,
-  verbose = SigBridgeRUtils::getFuncOption("verbose") \%||\% TRUE
+  verbose = SigBridgeRUtils::getFuncOption("verbose") \%||\% TRUE,
+  force_rewrite = FALSE,
+  ...
 )
 }
 \arguments{
@@ -90,6 +92,10 @@ Default: 3.0.}
 model training. Each model in the ensemble uses a derived seed.}
 
 \item{verbose}{Logical, whether to print messages.}
+
+\item{force_rewrite}{rewrite input files}
+
+\item{...}{unused}
 }
 \value{
 Returns a list of trained CCMTL model objects from the bootstrap aggregation

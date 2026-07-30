@@ -26,12 +26,18 @@ predict_pat = add_layer(
 
 # Cox proportional hazards loss (negative log partial likelihood)
 lossLabel2 = -tf.reduce_mean(
-    (tf.squeeze(tf.slice(predict_pat, [lsc, 0], [lpat, Lpat])) - tf.log(
-        tf.reduce_sum(
-            tf.exp(tf.squeeze(tf.slice(predict_pat, [lsc, 0], [lpat, Lpat]))) *
-            r_pat,
-            1,
-        ))) * c_pat)
+    (
+        tf.squeeze(tf.slice(predict_pat, [lsc, 0], [lpat, Lpat]))
+        - tf.log(
+            tf.reduce_sum(
+                tf.exp(tf.squeeze(tf.slice(predict_pat, [lsc, 0], [lpat, Lpat])))
+                * r_pat,
+                1,
+            )
+        )
+    )
+    * c_pat
+)
 
 # Maximum Mean Discrepancy loss for domain adaptation
 lossMMD = mmd_loss(
@@ -44,14 +50,14 @@ lossConstSCtoPT = tf.reduce_mean(
     tf.reduce_sum(
         tf.square(tf.slice(predict_pat, [0, 0], [lsc, Lpat]) - (1.0 / 2.0)),
         reduction_indices=[1],
-    ))
+    )
+)
 
 # Combined loss
 loss = 2 * lossLabel2 + lambda3 * lossMMD + lossConstSCtoPT
 
 # Optimizer
-train_step1 = tf.train.AdamOptimizer(learning_rate=0.01,
-                                     epsilon=1e-3).minimize(loss)
+train_step1 = tf.train.AdamOptimizer(learning_rate=0.01, epsilon=1e-3).minimize(loss)
 
 # ***********************************************************************
 # Training batch preparation function
@@ -81,21 +87,14 @@ def prepare_training_batch():
 
     # Prepare training dictionary
     tensor_train = {
-        xs:
-        np.concatenate(
-            [np.squeeze(Xsc[
-                train_sc2,
-            ]), np.squeeze(Xpat[train_pat2, :])]),
-        r_pat:
-        Rmatrix(survtime[train_pat2]),
-        c_pat:
-        np.squeeze(censor[train_pat2]),
-        lsc:
-        len(train_sc2),
-        lpat:
-        len(train_pat2),
-        kprob:
-        do_prc,
+        xs: np.concatenate(
+            [np.squeeze(Xsc[train_sc2,]), np.squeeze(Xpat[train_pat2, :])]
+        ),
+        r_pat: Rmatrix(survtime[train_pat2]),
+        c_pat: np.squeeze(censor[train_pat2]),
+        lsc: len(train_sc2),
+        lpat: len(train_pat2),
+        kprob: do_prc,
     }
 
     return tensor_train
@@ -126,16 +125,14 @@ for i in range(train_steps + 1):
     sess.run(train_step1, feed_dict=tensor_train)
 
     # Log and resample every 50 steps
-    if i % 50 == 0:
+    if i % 100 == 0:
         # Calculate loss values
         loss_val = sess.run(loss, feed_dict=tensor_train)
         lossLabel2_val = sess.run(lossLabel2, feed_dict=tensor_train)
         lossMMD_val = sess.run(lossMMD, feed_dict=tensor_train)
 
         # Print progress
-        print(
-            f"{i:<10} {loss_val:<15.4f} {lossLabel2_val:<15.4f} {lossMMD_val:<15.4f}"
-        )
+        print(f"{i:<10} {loss_val:<15.4f} {lossLabel2_val:<15.4f} {lossMMD_val:<15.4f}")
 
         # Prepare next batch (except for last iteration)
         if i < train_steps:

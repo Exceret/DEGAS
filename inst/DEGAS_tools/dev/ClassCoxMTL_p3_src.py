@@ -59,16 +59,23 @@ lossLabel1 = tf.reduce_mean(
     tf.reduce_sum(
         tf.square(ys_sc - tf.slice(predict_sc, [0, 0], [lsc, Lsc])),
         reduction_indices=[1],
-    ))
+    )
+)
 
 # Cox proportional hazards loss (negative log partial likelihood)
 lossLabel2 = -tf.reduce_mean(
-    (tf.squeeze(tf.slice(predict_pat, [lsc, 0], [lpat, Lpat])) - tf.log(
-        tf.reduce_sum(
-            tf.exp(tf.squeeze(tf.slice(predict_pat, [lsc, 0], [lpat, Lpat]))) *
-            r_pat,
-            1,
-        ))) * c_pat)
+    (
+        tf.squeeze(tf.slice(predict_pat, [lsc, 0], [lpat, Lpat]))
+        - tf.log(
+            tf.reduce_sum(
+                tf.exp(tf.squeeze(tf.slice(predict_pat, [lsc, 0], [lpat, Lpat])))
+                * r_pat,
+                1,
+            )
+        )
+    )
+    * c_pat
+)
 
 # MMD loss for domain adaptation
 lossMMD = mmd_loss(
@@ -81,28 +88,36 @@ lossConstSCtoPT = tf.reduce_mean(
     tf.reduce_sum(
         tf.square(tf.slice(predict_pat, [0, 0], [lsc, Lpat]) - (1.0 / 2.0)),
         reduction_indices=[1],
-    ))
+    )
+)
 
 # Constraint loss: Patient samples should have uniform SC predictions
 lossConstPTtoSC = tf.reduce_mean(
     tf.reduce_sum(
         tf.square(tf.slice(predict_sc, [lsc, 0], [lpat, Lsc]) - (1.0 / Lsc)),
         reduction_indices=[1],
-    ))
+    )
+)
 
 # Combined loss for main task
-loss = (2 * lossLabel1 + lambda2 * lossLabel2 + lambda3 * lossMMD +
-        lossConstSCtoPT + lossConstPTtoSC)
+loss = (
+    2 * lossLabel1
+    + lambda2 * lossLabel2
+    + lambda3 * lossMMD
+    + lossConstSCtoPT
+    + lossConstPTtoSC
+)
 
 # Autoencoder loss
 lossae_sc2pat = tf.reduce_mean(
-    tf.reduce_sum(tf.square(ps - predictae_sc2pat), reduction_indices=[1]))
+    tf.reduce_sum(tf.square(ps - predictae_sc2pat), reduction_indices=[1])
+)
 
 # Optimizers
-train_step1 = tf.train.AdamOptimizer(learning_rate=0.01,
-                                     epsilon=1e-3).minimize(loss)
-train_step2 = tf.train.AdamOptimizer(learning_rate=0.01,
-                                     epsilon=1e-3).minimize(lossae_sc2pat)
+train_step1 = tf.train.AdamOptimizer(learning_rate=0.01, epsilon=1e-3).minimize(loss)
+train_step2 = tf.train.AdamOptimizer(learning_rate=0.01, epsilon=1e-3).minimize(
+    lossae_sc2pat
+)
 
 # ***********************************************************************
 # Training batch preparation function
@@ -112,7 +127,7 @@ train_step2 = tf.train.AdamOptimizer(learning_rate=0.01,
 def prepare_training_batch():
     """
     Prepare training batch with SC class balancing
-    
+
     Returns:
         tuple: (tensor_train, train_pat2) where
             - tensor_train: dict of training tensors
@@ -147,9 +162,7 @@ def prepare_training_batch():
 
     # Prepare training dictionary
     tensor_train = {
-        xs:
-        np.concatenate([resampleGammaXYsc[0],
-                        np.squeeze(Xpat[train_pat2, :])]),
+        xs: np.concatenate([resampleGammaXYsc[0], np.squeeze(Xpat[train_pat2, :])]),
         ys_sc: resampleGammaXYsc[1],
         r_pat: Rmatrix(survtime[train_pat2]),
         c_pat: np.squeeze(censor[train_pat2]),
@@ -191,29 +204,20 @@ for i in range(train_steps + 1):
     sess.run(
         train_step2,
         feed_dict={
-            es:
-            sess.run(
+            es: sess.run(
                 predict_sc,
-                feed_dict={
-                    xs: np.squeeze(Xpat[train_pat2, :]),
-                    kprob: do_prc
-                },
+                feed_dict={xs: np.squeeze(Xpat[train_pat2, :]), kprob: do_prc},
             ),
-            ps:
-            sess.run(
+            ps: sess.run(
                 predict_pat,
-                feed_dict={
-                    xs: np.squeeze(Xpat[train_pat2, :]),
-                    kprob: do_prc
-                },
+                feed_dict={xs: np.squeeze(Xpat[train_pat2, :]), kprob: do_prc},
             ),
-            kprob:
-            do_prc,
+            kprob: do_prc,
         },
     )
 
     # Log and resample every 50 steps
-    if i % 50 == 0:
+    if i % 100 == 0:
         # Calculate loss values
         loss_val = sess.run(loss, feed_dict=tensor_train)
         lossLabel1_val = sess.run(lossLabel1, feed_dict=tensor_train)
@@ -224,24 +228,15 @@ for i in range(train_steps + 1):
         lossae_val = sess.run(
             lossae_sc2pat,
             feed_dict={
-                es:
-                sess.run(
+                es: sess.run(
                     predict_sc,
-                    feed_dict={
-                        xs: np.squeeze(Xpat[train_pat2, :]),
-                        kprob: do_prc
-                    },
+                    feed_dict={xs: np.squeeze(Xpat[train_pat2, :]), kprob: do_prc},
                 ),
-                ps:
-                sess.run(
+                ps: sess.run(
                     predict_pat,
-                    feed_dict={
-                        xs: np.squeeze(Xpat[train_pat2, :]),
-                        kprob: do_prc
-                    },
+                    feed_dict={xs: np.squeeze(Xpat[train_pat2, :]), kprob: do_prc},
                 ),
-                kprob:
-                do_prc,
+                kprob: do_prc,
             },
         )
 

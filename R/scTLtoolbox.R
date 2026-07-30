@@ -118,133 +118,133 @@
 # #***************************************************************
 # #***************************************************************a
 
-# # zscore normalization
-# #' @keywords internal
-# normFunc <- function(x) {
-#   return((x - Matrix::mean(x, na.rm = T)) / (stats::sd(x, na.rm = T) + 1e-3))
-# }
+# zscore normalization
+#' @keywords internal
+normFunc <- function(x) {
+  return((x - Matrix::mean(x, na.rm = T)) / (stats::sd(x, na.rm = T) + 1e-3))
+}
 
-# # scaling from 0-1
-# #' @keywords internal
-# scaleFunc <- function(x) {
-#   return(
-#     (x - min(x, na.rm = T)) / (max(x, na.rm = T) - min(x, na.rm = T) + 1e-3)
-#   )
-# }
+# scaling from 0-1
+#' @keywords internal
+scaleFunc <- function(x) {
+  return(
+    (x - min(x, na.rm = T)) / (max(x, na.rm = T) - min(x, na.rm = T) + 1e-3)
+  )
+}
 
-# # Preprocess count data
-# #' @keywords internal
-# normalizeScale <- function(X) {
-#   return(Matrix::t(apply(
-#     Matrix::t(apply(Matrix::as.matrix(Matrix::t(X)), 1, normFunc)),
-#     1,
-#     scaleFunc
-#   )))
-# }
+# Preprocess count data
+#' @keywords internal
+normalizeScale <- function(X) {
+  return(Matrix::t(apply(
+    Matrix::t(apply(Matrix::as.matrix(Matrix::t(X)), 1, normFunc)),
+    1,
+    scaleFunc
+  )))
+}
 
-# #' @keywords internal
-# preprocessCounts <- function(X) {
-#   return(normalizeScale(1.5^log2(X + 1)))
-# }
+#' @keywords internal
+preprocessCounts <- function(X) {
+  return(normalizeScale(1.5^log2(X + 1)))
+}
 
-# #' @keywords internal
-# preprocessAllCounts <- function(sc.dat, pt.dat) {
-#   ks.d <- c(0, 0, 0, 0)
-#   names(ks.d) <- c("nonenone", "log2none", "nonelog2", "log2log2")
-#   tmp <- suppressWarnings(stats::ks.test(
-#     preprocessCounts(sc.dat),
-#     preprocessCounts(pt.dat)
-#   ))
-#   ks.d["nonenone"] <- tmp$statistic
-#   tmp <- suppressWarnings(stats::ks.test(
-#     preprocessCounts(log2(sc.dat + 1)),
-#     preprocessCounts(pt.dat)
-#   ))
-#   ks.d["log2none"] <- tmp$statistic
-#   tmp <- suppressWarnings(stats::ks.test(
-#     preprocessCounts(sc.dat),
-#     preprocessCounts(log2(pt.dat + 1))
-#   ))
-#   ks.d["nonelog2"] <- tmp$statistic
-#   tmp <- suppressWarnings(stats::ks.test(
-#     preprocessCounts(log2(sc.dat + 1)),
-#     preprocessCounts(log2(pt.dat + 1))
-#   ))
-#   ks.d["log2log2"] <- tmp$statistic
-#   message(names(ks.d)[ks.d == min(ks.d)])
-#   if (names(ks.d)[ks.d == min(ks.d)] == "nonenone") {
-#     return(list(
-#       scDat = preprocessCounts(sc.dat),
-#       patDat = preprocessCounts(pt.dat)
-#     ))
-#   } else if (names(ks.d)[ks.d == min(ks.d)] == "log2none") {
-#     return(list(
-#       scDat = preprocessCounts(log2(sc.dat + 1)),
-#       patDat = preprocessCounts(pt.dat)
-#     ))
-#   } else if (names(ks.d)[ks.d == min(ks.d)] == "nonelog2") {
-#     return(list(
-#       scDat = preprocessCounts(sc.dat),
-#       patDat = preprocessCounts(log2(pt.dat + 1))
-#     ))
-#   } else {
-#     return(list(
-#       scDat = preprocessCounts(log2(sc.dat + 1)),
-#       patDat = preprocessCounts(log2(pt.dat + 1))
-#     ))
-#   }
-# }
+#' @keywords internal
+preprocessAllCounts <- function(sc.dat, pt.dat) {
+  ks.d <- c(0, 0, 0, 0)
+  names(ks.d) <- c("nonenone", "log2none", "nonelog2", "log2log2")
+  tmp <- suppressWarnings(stats::ks.test(
+    preprocessCounts(sc.dat),
+    preprocessCounts(pt.dat)
+  ))
+  ks.d["nonenone"] <- tmp$statistic
+  tmp <- suppressWarnings(stats::ks.test(
+    preprocessCounts(log2(sc.dat + 1)),
+    preprocessCounts(pt.dat)
+  ))
+  ks.d["log2none"] <- tmp$statistic
+  tmp <- suppressWarnings(stats::ks.test(
+    preprocessCounts(sc.dat),
+    preprocessCounts(log2(pt.dat + 1))
+  ))
+  ks.d["nonelog2"] <- tmp$statistic
+  tmp <- suppressWarnings(stats::ks.test(
+    preprocessCounts(log2(sc.dat + 1)),
+    preprocessCounts(log2(pt.dat + 1))
+  ))
+  ks.d["log2log2"] <- tmp$statistic
+  message(names(ks.d)[ks.d == min(ks.d)])
+  if (names(ks.d)[ks.d == min(ks.d)] == "nonenone") {
+    return(list(
+      scDat = preprocessCounts(sc.dat),
+      patDat = preprocessCounts(pt.dat)
+    ))
+  } else if (names(ks.d)[ks.d == min(ks.d)] == "log2none") {
+    return(list(
+      scDat = preprocessCounts(log2(sc.dat + 1)),
+      patDat = preprocessCounts(pt.dat)
+    ))
+  } else if (names(ks.d)[ks.d == min(ks.d)] == "nonelog2") {
+    return(list(
+      scDat = preprocessCounts(sc.dat),
+      patDat = preprocessCounts(log2(pt.dat + 1))
+    ))
+  } else {
+    return(list(
+      scDat = preprocessCounts(log2(sc.dat + 1)),
+      patDat = preprocessCounts(log2(pt.dat + 1))
+    ))
+  }
+}
 
-# # center to 0
-# #' @keywords internal
-# centerFunc <- function(x) {
-#   return(x - Matrix::mean(x, na.rm = T))
-# }
+# center to 0
+#' @keywords internal
+centerFunc <- function(x) {
+  return(x - Matrix::mean(x, na.rm = T))
+}
 
-# # Activation functions and utilities
+# Activation functions and utilities
 
-# # Sigmoid activation function
-# #' @keywords internal
-# sigmoid <- function(x) {
-#   1 / (1 + exp(-x))
-# }
+# Sigmoid activation function
+#' @keywords internal
+sigmoid <- function(x) {
+  1 / (1 + exp(-x))
+}
 
-# # Log sum exp transformation (for softmax)
-# #' @keywords internal
-# logsumexp <- function(x) {
-#   y <- max(x)
-#   y + log(sum(exp(x - y)))
-# }
+# Log sum exp transformation (for softmax)
+#' @keywords internal
+logsumexp <- function(x) {
+  y <- max(x)
+  y + log(sum(exp(x - y)))
+}
 
-# # Softmax activation function
-# #' @keywords internal
-# softmax <- function(X) {
-#   return(Matrix::t(apply(X, 1, function(x) exp(x - logsumexp(x)))))
-# }
+# Softmax activation function
+#' @keywords internal
+softmax <- function(X) {
+  return(Matrix::t(apply(X, 1, function(x) exp(x - logsumexp(x)))))
+}
 
-# # List of label names to a onehot matrix with labels as column names
-# #' @keywords internal
-# toOneHot <- function(labels) {
-#   labs <- unique(labels)
-#   out <- matrix(0, length(labels), length(labs))
-#   colnames(out) <- labs
-#   row.names(out) <- row.names(labels)
-#   for (i in 1:length(labels)) {
-#     out[i, labels[i]] <- 1
-#   }
-#   return(out)
-# }
+# List of label names to a onehot matrix with labels as column names
+#' @keywords internal
+toOneHot <- function(labels) {
+  labs <- unique(labels)
+  out <- matrix(0, length(labels), length(labs))
+  colnames(out) <- labs
+  row.names(out) <- row.names(labels)
+  for (i in 1:length(labels)) {
+    out[i, labels[i]] <- 1
+  }
+  return(out)
+}
 
-# # Convert matrix of output weights to max value for each row (row max = 1 and not row max = 0)
-# #' @keywords internal
-# probtoOneHot <- function(probMat) {
-#   idx <- apply(probMat, 1, function(x) Matrix::which(x == max(x)))
-#   probMat <- probMat * 0
-#   for (i in 1:length(idx)) {
-#     probMat[i, idx[i]] <- 1
-#   }
-#   return(probMat)
-# }
+# Convert matrix of output weights to max value for each row (row max = 1 and not row max = 0)
+#' @keywords internal
+probtoOneHot <- function(probMat) {
+  idx <- apply(probMat, 1, function(x) Matrix::which(x == max(x)))
+  probMat <- probMat * 0
+  for (i in 1:length(idx)) {
+    probMat[i, idx[i]] <- 1
+  }
+  return(probMat)
+}
 
 # # Predict patient class from proportions of single cell classes
 # #' @keywords internal
@@ -253,174 +253,174 @@
 #   return(softmax(sweep((Z1 %*% ccModel1@Theta5), 2, ccModel1@Bias5, '+')))
 # }
 
-# #***************************************************************
-# # Other functions
+#***************************************************************
+# Other functions
 
-# # Generates sets for k fold cross validation
-# #' @keywords internal
-# splitKfoldCV <- function(N, k) {
-#   if (k < 3) {
-#     stop("Please use 3 or more folds")
-#   }
-#   Idx <- as.numeric(sample(1:N, N, replace = FALSE))
-#   sz <- rep(floor(N / k), k)
-#   rem <- N - sum(sz)
-#   if (rem > 0) {
-#     cntr <- 0
-#     for (i in 1:rem) {
-#       if (cntr == k) {
-#         cntr <- 1
-#       } else {
-#         cntr <- cntr + 1
-#       }
-#       sz[cntr] <- sz[cntr] + 1
-#     }
-#   }
-#   cntr <- 0
-#   grpIdx <- list()
-#   for (i in 1:k) {
-#     grpIdx[[i]] <- Idx[(cntr + 1):(cntr + sz[i])]
-#     cntr <- cntr + sz[i]
-#   }
-#   return(grpIdx)
-# }
+# Generates sets for k fold cross validation
+#' @keywords internal
+splitKfoldCV <- function(N, k) {
+  if (k < 3) {
+    stop("Please use 3 or more folds")
+  }
+  Idx <- as.numeric(sample(1:N, N, replace = FALSE))
+  sz <- rep(floor(N / k), k)
+  rem <- N - sum(sz)
+  if (rem > 0) {
+    cntr <- 0
+    for (i in 1:rem) {
+      if (cntr == k) {
+        cntr <- 1
+      } else {
+        cntr <- cntr + 1
+      }
+      sz[cntr] <- sz[cntr] + 1
+    }
+  }
+  cntr <- 0
+  grpIdx <- list()
+  for (i in 1:k) {
+    grpIdx[[i]] <- Idx[(cntr + 1):(cntr + sz[i])]
+    cntr <- cntr + sz[i]
+  }
+  return(grpIdx)
+}
 
-# # Get a feature vector from a dataframe
-# #' @keywords internal
-# getFeat <- function(vec, df, colm, colo) {
-#   tmp <- vec
-#   for (i in 1:length(vec)) {
-#     tmp[i] <- df[Matrix::which(df[, colm] == vec[i])[1], colo]
-#   }
-#   return(tmp)
-# }
+# Get a feature vector from a dataframe
+#' @keywords internal
+getFeat <- function(vec, df, colm, colo) {
+  tmp <- vec
+  for (i in 1:length(vec)) {
+    tmp[i] <- df[Matrix::which(df[, colm] == vec[i])[1], colo]
+  }
+  return(tmp)
+}
 
-# # returns duplicate row names to remove
-# #' @keywords internal
-# remDupIdx <- function(X, dup_rnames, rnames) {
-#   rem <- c()
-#   for (dup_rname in dup_rnames) {
-#     tmp <- Matrix::which(rnames == dup_rname)
-#     Xtmp <- X[tmp, ]
-#     Xmean <- Matrix::rowMeans(Matrix::as.matrix(Xtmp[, 2:dim(Xtmp)[2]]))
-#     Xmean[is.na(Xmean)] <- 0
-#     Xmean <- abs(Xmean)
-#     rem <- c(rem, tmp[Matrix::which(Xmean != max(Xmean, na.rm = TRUE))])
-#   }
-#   return(rem)
-# }
+# returns duplicate row names to remove
+#' @keywords internal
+remDupIdx <- function(X, dup_rnames, rnames) {
+  rem <- c()
+  for (dup_rname in dup_rnames) {
+    tmp <- Matrix::which(rnames == dup_rname)
+    Xtmp <- X[tmp, ]
+    Xmean <- Matrix::rowMeans(Matrix::as.matrix(Xtmp[, 2:dim(Xtmp)[2]]))
+    Xmean[is.na(Xmean)] <- 0
+    Xmean <- abs(Xmean)
+    rem <- c(rem, tmp[Matrix::which(Xmean != max(Xmean, na.rm = TRUE))])
+  }
+  return(rem)
+}
 
-# #***************************************************************
-# # Post-processing functions
+#***************************************************************
+# Post-processing functions
 
-# # Quantile normalization
-# #' @keywords internal
-# quantNorm <- function(
-#   df,
-#   center = 'median',
-#   rescale = TRUE,
-#   rescale_mult = 1e4
-# ) {
-#   df_rank <- apply(df, 2, rank, ties.method = "min")
-#   df_sorted <- data.frame(apply(df, 2, sort))
-#   df_mean <- apply(df_sorted, 1, mean)
-#   index_to_mean <- function(my_index, my_mean) {
-#     return(my_mean[my_index])
-#   }
-#   df_final <- apply(df_rank, 2, index_to_mean, my_mean = df_mean)
-#   rownames(df_final) <- rownames(df)
-#   meds <- eval(parse(text = paste0("apply(df_final, 2, ", center, ")")))
-#   df_final <- sweep(df_final, 2, meds, '-')
-#   if (rescale) {
-#     df_final[df_final > 0] <- eval(parse(
-#       text = paste0("log2(", rescale_mult, "*df_final[df_final>0])")
-#     ))
-#     df_final[df_final < 0] <- eval(parse(
-#       text = paste0("-log2(-", rescale_mult, "*df_final[df_final<0])")
-#     ))
-#     meds <- eval(parse(text = paste0("apply(df_final, 2, ", center, ")")))
-#     df_final <- sweep(df_final, 2, meds, '-')
-#   }
-#   return(df_final)
-# }
+# Quantile normalization
+#' @keywords internal
+quantNorm <- function(
+  df,
+  center = 'median',
+  rescale = TRUE,
+  rescale_mult = 1e4
+) {
+  df_rank <- apply(df, 2, rank, ties.method = "min")
+  df_sorted <- data.frame(apply(df, 2, sort))
+  df_mean <- apply(df_sorted, 1, mean)
+  index_to_mean <- function(my_index, my_mean) {
+    return(my_mean[my_index])
+  }
+  df_final <- apply(df_rank, 2, index_to_mean, my_mean = df_mean)
+  rownames(df_final) <- rownames(df)
+  meds <- eval(parse(text = paste0("apply(df_final, 2, ", center, ")")))
+  df_final <- sweep(df_final, 2, meds, '-')
+  if (rescale) {
+    df_final[df_final > 0] <- eval(parse(
+      text = paste0("log2(", rescale_mult, "*df_final[df_final>0])")
+    ))
+    df_final[df_final < 0] <- eval(parse(
+      text = paste0("-log2(-", rescale_mult, "*df_final[df_final<0])")
+    ))
+    meds <- eval(parse(text = paste0("apply(df_final, 2, ", center, ")")))
+    df_final <- sweep(df_final, 2, meds, '-')
+  }
+  return(df_final)
+}
 
-# # Return euclidean distance between two points
-# #' @keywords internal
-# euclDist <- function(loc1, loc2) {
-#   return(sqrt(sum((loc1 - loc2)^2)))
-# }
+# Return euclidean distance between two points
+#' @keywords internal
+euclDist <- function(loc1, loc2) {
+  return(sqrt(sum((loc1 - loc2)^2)))
+}
 
-# # Return a matrix of all pairwise distances
-# #' @keywords internal
-# pairDist <- function(locs) {
-#   N <- dim(locs)[1]
-#   out <- matrix(NA, N, N)
-#   for (i in 1:N) {
-#     for (j in 1:i) {
-#       out[i, j] <- out[j, i] <- euclDist(locs[i, ], locs[j, ])
-#     }
-#   }
-#   return(out)
-# }
+# Return a matrix of all pairwise distances
+#' @keywords internal
+pairDist <- function(locs) {
+  N <- dim(locs)[1]
+  out <- matrix(NA, N, N)
+  for (i in 1:N) {
+    for (j in 1:i) {
+      out[i, j] <- out[j, i] <- euclDist(locs[i, ], locs[j, ])
+    }
+  }
+  return(out)
+}
 
-# # Return k-nearest-neighbor smoothed probabilites
-# #' @keywords internal
-# knnSmooth <- function(probs, locs, k = 5) {
-#   out <- probs
-#   dists <- pairDist(locs)
-#   if (class(probs)[1] == "numeric") {
-#     N <- length(probs)
-#     for (i in 1:N) {
-#       idx <- order(dists[i, ])
-#       out[i] <- Matrix::mean(probs[idx[1:k]], na.rm = TRUE)
-#     }
-#   } else {
-#     N <- dim(locs)[1]
-#     for (i in 1:N) {
-#       idx <- order(dists[i, ])
-#       out[i, ] <- Matrix::colMeans(probs[idx[1:k], ], na.rm = TRUE)
-#     }
-#   }
-#   return(out)
-# }
+# Return k-nearest-neighbor smoothed probabilites
+#' @keywords internal
+knnSmooth <- function(probs, locs, k = 5) {
+  out <- probs
+  dists <- pairDist(locs)
+  if (class(probs)[1] == "numeric") {
+    N <- length(probs)
+    for (i in 1:N) {
+      idx <- order(dists[i, ])
+      out[i] <- Matrix::mean(probs[idx[1:k]], na.rm = TRUE)
+    }
+  } else {
+    N <- dim(locs)[1]
+    for (i in 1:N) {
+      idx <- order(dists[i, ])
+      out[i, ] <- Matrix::colMeans(probs[idx[1:k], ], na.rm = TRUE)
+    }
+  }
+  return(out)
+}
 
-# # return random sample (of s) which is evenly distributed across sample groups (g)
-# # where each group has n samples.
-# # Note: If a group has less than n samples, then all samples in that group are used.
-# #' @keywords internal
-# evenSamp <- function(s, g, n) {
-#   groups <- unique(g)
-#   out <- list()
-#   for (group in groups) {
-#     if (sum(g == group) >= n) {
-#       out[[group]] <- sample(s[g == group], n, replace = FALSE)
-#     } else if (sum(g == group) > 0) {
-#       out[[group]] <- sample(
-#         s[g == group],
-#         sum(g == group),
-#         replace = FALSE
-#       )
-#     } else {
-#       #Adding nothing
-#     }
-#   }
-#   out <- unlist(out)
-#   return(out)
-# }
+# return random sample (of s) which is evenly distributed across sample groups (g)
+# where each group has n samples.
+# Note: If a group has less than n samples, then all samples in that group are used.
+#' @keywords internal
+evenSamp <- function(s, g, n) {
+  groups <- unique(g)
+  out <- list()
+  for (group in groups) {
+    if (sum(g == group) >= n) {
+      out[[group]] <- sample(s[g == group], n, replace = FALSE)
+    } else if (sum(g == group) > 0) {
+      out[[group]] <- sample(
+        s[g == group],
+        sum(g == group),
+        replace = FALSE
+      )
+    } else {
+      #Adding nothing
+    }
+  }
+  out <- unlist(out)
+  return(out)
+}
 
-# # Convert DEGAS output [0,1] to an association [-1,1]
-# #' @keywords internal
-# toCorrCoeff <- function(probs) {
-#   k <- dim(probs)[2]
-#   if (k < 2 || is.null(k)) {
-#     k <- 2
-#   }
-#   l <- 2
-#   return(2 * ((probs - 1 / k) / (l - l / k) + 1 / l) - 1)
-# }
+# Convert DEGAS output [0,1] to an association [-1,1]
+#' @keywords internal
+toCorrCoeff <- function(probs) {
+  k <- dim(probs)[2]
+  if (k < 2 || is.null(k)) {
+    k <- 2
+  }
+  l <- 2
+  return(2 * ((probs - 1 / k) / (l - l / k) + 1 / l) - 1)
+}
 
-# #***************************************************************
-# # Functions for atlas level datasets and additional bootstrapping statistics
+#***************************************************************
+# Functions for atlas level datasets and additional bootstrapping statistics
 
 # # Running DEGAS for large, atlas level, datasets
 # # ! Future update

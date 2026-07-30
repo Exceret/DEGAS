@@ -46,6 +46,8 @@
 #' @param DEGAS.seed Integer specifying the base random seed for reproducible
 #'   model training. Each model in the ensemble uses a derived seed.
 #' @param verbose Logical, whether to print messages.
+#' @param force_rewrite rewrite input files
+#' @param ... unused
 #'
 #' @return
 #' Returns a list of trained CCMTL model objects from the bootstrap aggregation
@@ -111,20 +113,22 @@ runCCMTLBag.optimized <- function(
   tmpDir,
   model_type,
   architecture,
-  FFdepth,
-  Bagdepth,
+  FFdepth = 3L,
+  Bagdepth = 5L,
   DEGAS.pyloc,
   DEGAS.toolsPath,
-  DEGAS.train_steps = 2000,
-  DEGAS.scbatch_sz = 200,
-  DEGAS.patbatch_sz = 50,
-  DEGAS.hidden_feats = 50,
+  DEGAS.train_steps = 2000L,
+  DEGAS.scbatch_sz = 200L,
+  DEGAS.patbatch_sz = 50L,
+  DEGAS.hidden_feats = 50L,
   DEGAS.do_prc = 0.5,
   DEGAS.lambda1 = 3.0,
   DEGAS.lambda2 = 3.0,
   DEGAS.lambda3 = 3.0,
   DEGAS.seed,
-  verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE
+  verbose = SigBridgeRUtils::getFuncOption("verbose") %||% TRUE,
+  force_rewrite = FALSE,
+  ...
 ) {
   if (verbose) {
     ts_cli$cli_alert_info(
@@ -154,42 +158,113 @@ runCCMTLBag.optimized <- function(
     )
   }
 
-  purrr::map(
-    seq_len(Bagdepth),
-    function(i) {
-      DEGAS.seed_i <- DEGAS.seed + (i - 1)
+  if (mirai::daemons_set()) {
+    ccmtl_fn <- purrr::in_parallel(
+      function(i) {
+        DEGAS.seed_i <- DEGAS.seed + (i - 1)
 
-      if (verbose) {
-        ts_cli$cli_alert_info("Training progress: {i}/{Bagdepth}...")
-      }
+        if (verbose) {
+          ts_cli$cli_alert_info("Training progress: {i}/{Bagdepth}...")
+        }
 
-      result <- runCCMTL.optimized(
-        scExp = scExp,
-        scLab = scLab,
-        patExp = patExp,
-        patLab = patLab,
-        tmpDir = tmpDir,
-        model_type = model_type,
-        architecture = architecture,
-        FFdepth = FFdepth,
-        DEGAS.pyloc = DEGAS.pyloc,
-        DEGAS.toolsPath = DEGAS.toolsPath,
-        DEGAS.train_steps = DEGAS.train_steps,
-        DEGAS.scbatch_sz = DEGAS.scbatch_sz,
-        DEGAS.patbatch_sz = DEGAS.patbatch_sz,
-        DEGAS.hidden_feats = DEGAS.hidden_feats,
-        DEGAS.do_prc = DEGAS.do_prc,
-        DEGAS.lambda1 = DEGAS.lambda1,
-        DEGAS.lambda2 = DEGAS.lambda2,
-        DEGAS.lambda3 = DEGAS.lambda3,
-        DEGAS.seed = DEGAS.seed_i,
-        # Written files will not be rewritten
-        force_rewrite = FALSE
-      )
-      class(result) <- "ccModel"
+        result <- runCCMTL.optimized(
+          scExp = scExp,
+          scLab = scLab,
+          patExp = patExp,
+          patLab = patLab,
+          tmpDir = tmpDir,
+          model_type = model_type,
+          architecture = architecture,
+          FFdepth = FFdepth,
+          DEGAS.pyloc = DEGAS.pyloc,
+          DEGAS.toolsPath = DEGAS.toolsPath,
+          DEGAS.train_steps = DEGAS.train_steps,
+          DEGAS.scbatch_sz = DEGAS.scbatch_sz,
+          DEGAS.patbatch_sz = DEGAS.patbatch_sz,
+          DEGAS.hidden_feats = DEGAS.hidden_feats,
+          DEGAS.do_prc = DEGAS.do_prc,
+          DEGAS.lambda1 = DEGAS.lambda1,
+          DEGAS.lambda2 = DEGAS.lambda2,
+          DEGAS.lambda3 = DEGAS.lambda3,
+          DEGAS.seed = DEGAS.seed_i,
+          # Written files will not be rewritten
+          force_rewrite = force_rewrite
+        )
+        class(result) <- "ccModel"
 
-      result
-    },
-    .progress = verbose
-  )
+        result
+      },
+      Bagdepth = Bagdepth,
+      ts_cli = ts_cli,
+      verbose = verbose,
+      runCCMTL.optimized = runCCMTL.optimized,
+      scExp = scExp,
+      scLab = scLab,
+      patExp = patExp,
+      patLab = patLab,
+      tmpDir = tmpDir,
+      model_type = model_type,
+      architecture = architecture,
+      FFdepth = FFdepth,
+      DEGAS.pyloc = DEGAS.pyloc,
+      DEGAS.toolsPath = DEGAS.toolsPath,
+      DEGAS.train_steps = DEGAS.train_steps,
+      DEGAS.scbatch_sz = DEGAS.scbatch_sz,
+      DEGAS.patbatch_sz = DEGAS.patbatch_sz,
+      DEGAS.hidden_feats = DEGAS.hidden_feats,
+      DEGAS.do_prc = DEGAS.do_prc,
+      DEGAS.lambda1 = DEGAS.lambda1,
+      DEGAS.lambda2 = DEGAS.lambda2,
+      DEGAS.lambda3 = DEGAS.lambda3,
+      DEGAS.seed = DEGAS.seed,
+      force_rewrite = force_rewrite,
+      makeExec = makeExec,
+      makeExec2 = makeExec2
+    )
+
+    purrr::map(
+      seq_len(Bagdepth),
+      ccmtl_fn,
+      .progress = verbose
+    )
+  } else {
+    purrr::map(
+      seq_len(Bagdepth),
+      function(i) {
+        DEGAS.seed_i <- DEGAS.seed + (i - 1)
+
+        if (verbose) {
+          ts_cli$cli_alert_info("Training progress: {i}/{Bagdepth}...")
+        }
+
+        result <- runCCMTL.optimized(
+          scExp = scExp,
+          scLab = scLab,
+          patExp = patExp,
+          patLab = patLab,
+          tmpDir = tmpDir,
+          model_type = model_type,
+          architecture = architecture,
+          FFdepth = FFdepth,
+          DEGAS.pyloc = DEGAS.pyloc,
+          DEGAS.toolsPath = DEGAS.toolsPath,
+          DEGAS.train_steps = DEGAS.train_steps,
+          DEGAS.scbatch_sz = DEGAS.scbatch_sz,
+          DEGAS.patbatch_sz = DEGAS.patbatch_sz,
+          DEGAS.hidden_feats = DEGAS.hidden_feats,
+          DEGAS.do_prc = DEGAS.do_prc,
+          DEGAS.lambda1 = DEGAS.lambda1,
+          DEGAS.lambda2 = DEGAS.lambda2,
+          DEGAS.lambda3 = DEGAS.lambda3,
+          DEGAS.seed = DEGAS.seed_i,
+          # Written files will not be rewritten
+          force_rewrite = force_rewrite
+        )
+        class(result) <- "ccModel"
+
+        result
+      },
+      .progress = verbose
+    )
+  }
 }

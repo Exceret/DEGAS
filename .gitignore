@@ -3,3 +3,6 @@ Data/
 .Rproj.user
 tests/testthat/test-DEGAS.R
 .codebuddy/
+tests/testthat/test-standalone.R
+real_123902
+DEGAS_res

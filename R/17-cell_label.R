@@ -136,6 +136,7 @@ LabelBinaryCells <- function(
   )
 
   # Apply labeling based on normality test result
+  label <- NULL
   pred_dt[,
     "label" := {
       if (normality_test_pval < 0.05) {
@@ -290,6 +291,7 @@ LabelContinuousCells <- function(
       "Searching for various phenotype-associated cells "
     )
   }
+  p_value <- column <- NULL
 
   # Use matrix operations for efficient MAD testing across predictions
   label_cols <- setdiff(names(pred_dt), "cell_id")
@@ -413,6 +415,7 @@ LabelSurvivalCells <- function(
   if (verbose) {
     ts_cli$cli_alert_info("Searching for survival-associated cells ")
   }
+  Hazard <- NULL
 
   pred_vec <- pred_dt[["Hazard"]]
   normality_test_pval <- switch(

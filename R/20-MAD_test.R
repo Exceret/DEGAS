@@ -72,6 +72,7 @@ mad.test <- function(x, na.rm = TRUE) {
   )
 
   # Calculate median and MAD
+  value <- z_score <- is_outlier <- index <- NULL
   median_val <- dt[, stats::median(`value`)]
   abs_dev <- abs(dt$`value` - median_val)
   mad_val <- stats::median(abs_dev)
