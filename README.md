@@ -4,7 +4,23 @@
 [![R-CMD-check](https://github.com/Exceret/DEGAS/actions/workflows/R-CMD-check.yaml/badge.svghttps://github.com/Exceret/DEGAS/actions/workflows/R-CMD-check.yaml/badge.svghttps://github.com/Exceret/DEGAS/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Exceret/DEGAS/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-Please use [SigBridgeR](https://github.com/WangLabCSU/SigBridgeR) for the fork version of DEGAS. Bug reports and feature requests are welcomed at [SigBridgeR-issues](https://github.com/WangLabCSU/SigBridgeR/issues).
+## Differences from the Original DEGAS Implementation
+
+This branch is a modernized reimplementation of the DEGAS framework. It preserves the core methodology—shared representation learning between single-cell and bulk data, patient-level classification or Cox survival supervision, optional cell-type supervision, MMD alignment, regularization, and bootstrap ensembling.
+
+However, it is **not guaranteed to be numerically identical** to the original implementation.
+
+Key differences include:
+
+- Uses a modern R–Python workflow through `reticulate` instead of temporary files and external Python scripts.
+- Uses a modern TensorFlow/Keras backend and model objects.
+- Performs explicit gene-name matching and reordering between single-cell and bulk data.
+- Includes built-in feature selection, which may change the genes used for training.
+- Supports the main classification and Cox survival workflows, but does not necessarily reproduce every legacy task/architecture option.
+- Some legacy arguments are retained for API familiarity and may be mapped to the new implementation rather than preserving their original behavior.
+- Default preprocessing, random initialization, optimization, and numerical behavior may differ.
+
+Therefore, this project should be considered a **modernized DEGAS reimplementation**, not a drop-in replacement for reproducing legacy DEGAS results exactly.
 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

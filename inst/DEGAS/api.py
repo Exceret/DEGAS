@@ -542,6 +542,12 @@ class DEGASTensorFlow:
 
         if row_names is None:
             row_names = [f"sample_{i}" for i in range(n)]
+        elif len(row_names) != n:
+            raise ValueError(
+                f"len(row_names)={len(row_names)} does not match the number of "
+                f"rows in the prediction matrix ({n}). row_names should contain "
+                f"one name per sample/cell (one per row of the matrix)."
+            )
 
         if self.patient_task_ == "cox":
             df = pd.DataFrame(
@@ -609,6 +615,12 @@ class DEGASTensorFlow:
 
         if row_names is None:
             row_names = [f"sample_{i}" for i in range(n)]
+        elif len(row_names) != n:
+            raise ValueError(
+                f"len(row_names)={len(row_names)} does not match the number of "
+                f"rows in the prediction matrix ({n}). row_names should contain "
+                f"one name per sample/cell (one per row of the matrix)."
+            )
 
         colnames = [f"cell_class_{str(c)}_score" for c in self.cell_classes_]
 
