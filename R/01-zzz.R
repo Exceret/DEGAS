@@ -1,7 +1,22 @@
 # ? Package startup messages
 .onLoad <- function(libname, pkgname) {
-  # Declare Python dependencies for reticulate
-  reticulate::py_require(c("tensorflow", "numpy"))
+  # Declare Python dependencies so reticulate automatically configures a
+  # Python environment (installing any missing packages) on first use.
+  #
+  # NOTE: we deliberately do NOT import the DEGAS Python module here. Doing so
+  # triggers a real Python import during devtools::document()/load_all() and
+  # fails when the configured Python lacks scipy/tensorflow. The module is
+  # imported lazily on first use via degas_py() (see R/02-python-loader.R).
+  reticulate::py_require(c(
+    "numpy",
+    "pandas",
+    "scipy",
+    "scikit-learn",
+    "scikit-survival",
+    "tensorflow",
+    "keras"
+  ))
+
   invisible()
 }
 
@@ -14,10 +29,3 @@
   packageStartupMessage(msg)
   invisible()
 }
-
-ts_cli <- SigBridgeRUtils::CreateTimeStampCliEnv()
-
-py <- reticulate::py
-
-#'@importFrom data.table `%chin%` %chin%
-NULL

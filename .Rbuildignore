@@ -6,3 +6,5 @@
 ^[.]?air[.]toml$
 ^\.vscode$
 ^\.github$
+^DEGAS_documentation\.md$
+^.codebuddy/*

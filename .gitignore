@@ -3,3 +3,4 @@ Data/
 .Rproj.user
 test/**
 tests/testthat/test-DEGAS.R
+.codebuddy/**
